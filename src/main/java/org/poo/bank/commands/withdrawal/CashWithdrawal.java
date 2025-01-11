@@ -1,6 +1,7 @@
 package org.poo.bank.commands.withdrawal;
 
 import org.poo.bank.account.Account;
+import org.poo.bank.exchange_rates.ExchangeRateManager;
 import org.poo.bank.user.User;
 import org.poo.bank.cards.Card;
 import org.poo.bank.transaction.Transaction;
@@ -27,7 +28,6 @@ public class CashWithdrawal {
             }
         }
 
-        // Dacă nu am găsit cardul, returnăm un mesaj specific pentru "Card not found"
         if (account == null || card == null) {
             throw new IllegalArgumentException("Card not found");
         }
@@ -37,20 +37,32 @@ public class CashWithdrawal {
             return; // Dacă cardul este înghețat, nu facem nimic
         }
 
+
+        String accountCurrency = account.getCurrency();
+
+        double amountToWithdraw = amount; // amount este în RON în input
+
+        if (!accountCurrency.equals("RON")) {
+            ExchangeRateManager exchangeRateManager = ExchangeRateManager.getInstance();
+            double exchangeRate = exchangeRateManager.getExchangeRate("RON", accountCurrency);
+            if (exchangeRate == 0) {
+                System.out.println("Exchange rate not available");
+                return; // Dacă nu există o rată de schimb, nu putem continua
+            }
+            // Transformăm suma din RON în moneda contului utilizatorului
+            amountToWithdraw = exchangeRateManager.convertCurrency("RON", accountCurrency, amount);
+            System.out.println("Amount to withdraw in " + accountCurrency + ": " + amountToWithdraw);
+        }
+
         // Verificăm dacă utilizatorul are suficiente fonduri în cont
         double balance = account.getBalance();
         double minimumBalance = account.getMinimumBalance();
 
-        // Verificăm dacă moneda este RON
-        if (!account.getCurrency().equals("RON")) {
-            return; // Dacă moneda nu este RON, nu facem nimic
-        }
-
         // Verificăm dacă fondurile sunt suficiente pentru retragere
-        if (balance - amount < minimumBalance) { // Comparație cu marja de toleranță
+        if (balance - amountToWithdraw < minimumBalance) {
             Transaction transaction1 = new Transaction(
                     timestamp,
-                    "Insufficient funds", // Descrierea erorii
+                    "Insufficient funds",
                     null,
                     null,
                     0,
@@ -65,49 +77,44 @@ public class CashWithdrawal {
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction1);
-            account.addTransaction(transaction1); // Adăugăm și tranzacția în contul asociat
-            return; // Nu sunt suficiente fonduri
+            account.addTransaction(transaction1);
+            return;
         }
 
         // Calculăm comisionul
         double fee = 0.0;
 
-        // Verificăm planul utilizatorului și aplicăm comisionul
         String userPlan = user.getPlan();
-
         if (userPlan == null) {
-            userPlan = "standard"; // Planul este null, presupunem un plan standard
+            userPlan = "standard";
         }
 
         switch (userPlan) {
             case "student":
-                fee = 0.0; // Nu se percepe comision
+                fee = 0.0;
                 break;
             case "silver":
                 if (amount > 500) {
-                    fee = 0.001 * amount; // 0.1% pentru sume mai mari de 500 RON
+                    fee = 0.001 * amountToWithdraw;
                 }
                 break;
             case "gold":
-                fee = 0.0; // Nu se percepe comision
+                fee = 0.0;
                 break;
             case "standard":
             default:
-                fee = 0.002 * amount; // 0.2% comision pentru planul standard
+                fee = 0.002 * amountToWithdraw;
                 break;
         }
 
-        // Afișăm comisionul calculat
         System.out.println("Comisionul pentru utilizatorul cu planul " + userPlan + " este: " + fee + " RON");
 
-        // Calculăm suma totală de retras, inclusiv comisionul
-        double totalAmountToWithdraw = amount + fee;
+        double totalAmountToWithdraw = amountToWithdraw + fee;
 
-        // Verificăm dacă există fonduri suficiente pentru a acoperi suma totală
         if (balance < totalAmountToWithdraw) {
             Transaction transaction2 = new Transaction(
                     timestamp,
-                    "Insufficient funds for commission", // Descrierea erorii
+                    "Insufficient funds for commission",
                     null,
                     null,
                     0,
@@ -122,11 +129,34 @@ public class CashWithdrawal {
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction2);
-            account.addTransaction(transaction2); // Adăugăm și tranzacția în contul asociat
-            return; // Nu sunt suficiente fonduri pentru retragerea sumei și comisionul
+            account.addTransaction(transaction2);
+            return;
         }
 
         // Retragem suma din contul utilizatorului
         account.withdraw(totalAmountToWithdraw);
+
+        // Înregistrăm tranzacția de retragere
+        Transaction cashWithdrawalTransaction = new Transaction(
+                timestamp,
+                "Cash withdrawal of ",
+                null,
+                null,
+                amount,
+                account.getCurrency(),
+                "withdrawal",
+                cardNumber,
+                user.getEmail(),
+                location,
+                null,
+                null,
+                null,
+                "cashWithdrawal"
+        );
+        user.addTransaction(cashWithdrawalTransaction);
+        account.addTransaction(cashWithdrawalTransaction);
+
+        System.out.println("Cash withdrawal înregistrat cu succes pentru utilizatorul " + user.getEmail());
     }
+
 }

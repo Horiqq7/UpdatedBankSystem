@@ -66,7 +66,7 @@ public final class SendMoney {
 
         if (receiverAccount == null) {
             Map<String, Object> error = new HashMap<>();
-            error.put("description", "Receiver account not found");
+            error.put("description", "User not found");
             output.add(error);
             return output;
         }

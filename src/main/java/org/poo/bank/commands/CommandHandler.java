@@ -188,8 +188,23 @@ public class CommandHandler {
     private void handleSendMoney(final CommandInput command, final ObjectNode objectNode,
                                  final ArrayNode output) {
         try {
-            bank.processCommand(command);
+            // Procesăm comanda sendMoney
+            List<Map<String, Object>> response = bank.processCommand(command);
+
+            // Verificăm dacă există un răspuns cu eroare "User not found" pentru destinatar
+            if (!response.isEmpty() && response.get(0).containsKey("description") &&
+                    response.get(0).get("description").equals("User not found")) {
+                // Dacă destinatarul nu a fost găsit, adăugăm mesajul de eroare în output
+                final var errorNode = objectMapper.createObjectNode();
+                errorNode.put("description", "User not found");
+                errorNode.put("timestamp", command.getTimestamp());
+                objectNode.set("output", errorNode);
+                output.add(objectNode);
+            }
+            // Nu adăugăm nimic în output dacă tranzacția a fost efectuată cu succes (fără erori)
+
         } catch (IllegalArgumentException e) {
+            // În cazul unei erori generale, adăugăm eroarea în output
             final var errorNode = objectMapper.createObjectNode();
             errorNode.put("description", e.getMessage());
             errorNode.put("timestamp", command.getTimestamp());
@@ -197,6 +212,8 @@ public class CommandHandler {
             output.add(objectNode);
         }
     }
+
+
 
     private void handlePrintTransactions(final CommandInput command, final ObjectNode objectNode,
                                          final ArrayNode output) {

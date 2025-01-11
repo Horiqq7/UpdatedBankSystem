@@ -213,6 +213,11 @@ public final class Transaction {
                 map.put("timestamp", timestamp);
                 map.put("description", description);
                 break;
+            case "cashWithdrawal":
+                map.put("timestamp", timestamp);
+                map.put("description", description + String.format("%.1f", amount));
+                map.put("amount", amount);
+                break;
 
             default:
                 break;

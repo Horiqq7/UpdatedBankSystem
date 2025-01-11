@@ -103,9 +103,26 @@ public final class PayOnline {
                     break;
 
                 case "silver":
-                    // Dacă suma în RON depășește 500, aplicăm un comision de 0.1%
-                    if (amount > 500) {
-                        comision = 0.1 / 100 * amount;
+                    // Convertim suma în RON dacă este necesar
+                    double amountInRON = amount;
+                    if (!currency.equalsIgnoreCase("RON")) {
+                        try {
+                            amountInRON = ExchangeRateManager.getInstance()
+                                    .convertCurrency(currency, "RON", amount);
+                        } catch (IllegalArgumentException e) {
+                            Map<String, Object> errorNode = new HashMap<>();
+                            errorNode.put("description", "Exchange rates not available");
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("command", "payOnline");
+                            response.put("output", errorNode);
+                            output.add(response);
+                            return output;
+                        }
+                    }
+
+                    // Aplicăm comisionul de 0.1% dacă suma în RON depășește 500
+                    if (amountInRON > 500) {
+                        comision = 0.1 / 100 * amountInRON;
                     }
                     break;
 
@@ -115,9 +132,25 @@ public final class PayOnline {
                     break;
 
                 case "standard":
-                default:
-                    // Planul standard percepe un comision de 0.2% din suma în RON
-                    comision = 0.2 / 100 * amount;
+                    // Convertim suma în RON dacă este necesar
+                    double amountInRONStandard = amount;
+                    if (!currency.equalsIgnoreCase("RON")) {
+                        try {
+                            amountInRONStandard = ExchangeRateManager.getInstance()
+                                    .convertCurrency(currency, "RON", amount);
+                        } catch (IllegalArgumentException e) {
+                            Map<String, Object> errorNode = new HashMap<>();
+                            errorNode.put("description", "Exchange rates not available");
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("command", "payOnline");
+                            response.put("output", errorNode);
+                            output.add(response);
+                            return output;
+                        }
+                    }
+
+                    // Aplicăm comisionul de 0.2% din suma în RON
+                    comision = 0.2 / 100 * amountInRONStandard;
                     break;
             }
 
@@ -170,26 +203,27 @@ public final class PayOnline {
 
         // Retragem suma pentru tranzacție
         account.withdrawFunds(amount);
+        if (amount > 0) {
+            Transaction transaction = new Transaction(
+                    command.getTimestamp(),
+                    "Card payment",
+                    account.getIban(),
+                    command.getCommerciant(),
+                    amount,
+                    account.getCurrency(),
+                    "payment",
+                    command.getCardNumber(),
+                    user.getEmail(),
+                    command.getCommerciant(),
+                    null,
+                    null,
+                    null,
+                    "payOnline"
+            );
 
-        Transaction transaction = new Transaction(
-                command.getTimestamp(),
-                "Card payment",
-                account.getIban(),
-                command.getCommerciant(),
-                amount,
-                account.getCurrency(),
-                "payment",
-                command.getCardNumber(),
-                user.getEmail(),
-                command.getCommerciant(),
-                null,
-                null,
-                null,
-                "payOnline"
-        );
-
-        user.addTransaction(transaction);
-        account.addTransaction(transaction);
+            user.addTransaction(transaction);
+            account.addTransaction(transaction);
+        }
 
         Cashback cashback = new Cashback();
         String userPlan = user.getPlan();

@@ -32,6 +32,7 @@ public class UpgradePlan {
         String newPlan = command.getNewPlanType();
 
 //        // Debugging: Afișăm planul actual și planul nou
+//        System.out.println(user.getEmail());
 //        System.out.println("Current plan: " + currentPlan);
 //        System.out.println("New plan: " + newPlan);
 
