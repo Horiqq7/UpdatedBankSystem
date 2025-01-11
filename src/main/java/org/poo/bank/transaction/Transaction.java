@@ -23,6 +23,7 @@ public final class Transaction {
     private final String commerciant;
     private final List<String> involvedAccounts;
     private final String error;
+    private final String newPlanType;  // Adăugăm câmpul newPlanType
 
     /**
      * Constructor pentru crearea unei tranzactii.
@@ -40,12 +41,13 @@ public final class Transaction {
      * @param involvedAccounts Conturile implicate.
      * @param error Eroarea asociata unei tranzactii, daca exista.
      * @param transactionType Tipul tranzactiei.
+     * @param newPlanType Tipul noului plan (pentru upgrade de plan)
      */
     public Transaction(final int timestamp, final String description, final String senderIBAN,
                        final String receiverIBAN, final double amount, final String currency,
                        final String transferType, final String card, final String cardHolder,
                        final String commerciant, final List<String> involvedAccounts,
-                       final String error, final String transactionType) {
+                       final String error, final String newPlanType, final String transactionType) {
         this.timestamp = timestamp;
         this.description = description;
         this.senderIBAN = senderIBAN;
@@ -59,6 +61,7 @@ public final class Transaction {
         this.involvedAccounts = involvedAccounts;
         this.transactionType = transactionType;
         this.error = error;
+        this.newPlanType = newPlanType;  // Setăm noul câmp
     }
 
     public List<String> getInvolvedAccounts() {
@@ -111,6 +114,11 @@ public final class Transaction {
 
     public String getError() {
         return error;
+    }
+
+    // Getter pentru newPlanType
+    public String getNewPlanType() {
+        return newPlanType;
     }
 
     /**
@@ -195,6 +203,13 @@ public final class Transaction {
                 map.put("timestamp", timestamp);
                 map.put("description", description);
                 break;
+            case "upgradePlan":
+                map.put("timestamp", timestamp);
+                map.put("description", description);
+                map.put("accountIBAN", senderIBAN);
+                map.put("newPlanType", newPlanType);  // Adăugăm câmpul newPlanType
+                break;
+
             default:
                 break;
         }

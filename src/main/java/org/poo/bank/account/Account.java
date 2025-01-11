@@ -291,6 +291,7 @@ public final class Account {
                     null,
                     null,
                     null,
+                    null,
                     "withdrawFunds"
             );
             addTransaction(transaction);
@@ -314,6 +315,7 @@ public final class Account {
                     iban,
                     amount,
                     currency,
+                    null,
                     null,
                     null,
                     null,
@@ -346,6 +348,7 @@ public final class Account {
                 null,
                 null,
                 null,
+                null,
                 "addCard"
         );
         addTransaction(transaction);
@@ -367,6 +370,7 @@ public final class Account {
                 currency,
                 null,
                 card.getCardNumber(),
+                null,
                 null,
                 null,
                 null,

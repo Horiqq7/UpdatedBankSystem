@@ -101,6 +101,7 @@ public final class PayOnline {
                     user.getEmail(), null,
                     null,
                     null,
+                    null,
                     "payOnlineInsufficientFunds"
             );
             user.addTransaction(transaction1);
@@ -123,6 +124,7 @@ public final class PayOnline {
                     command.getCardNumber(),
                     user.getEmail(),
                     command.getCommerciant(),
+                    null,
                     null,
                     null,
                     "payOnlineCardIsFrozen"
@@ -170,6 +172,7 @@ public final class PayOnline {
                 command.getCommerciant(),
                 null,
                 null,
+                null,
                 "payOnline"
         );
 
@@ -195,6 +198,7 @@ public final class PayOnline {
                     null,
                     null,
                     null,
+                    null,
                     "destroyOneTimeCard"
             );
             user.addTransaction(destroyCardTransaction);
@@ -213,6 +217,7 @@ public final class PayOnline {
                     "other",
                     newCardNumber,
                     user.getEmail(),
+                    null,
                     null,
                     null,
                     null,

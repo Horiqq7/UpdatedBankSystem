@@ -93,6 +93,7 @@ public final class SendMoney {
                     null,
                     null,
                     null,
+                    command.getNewPlanType(),
                     "sendMoneyInsufficientFunds"
             );
             senderUser.addTransaction(insufficientFundsTransaction);
@@ -136,6 +137,7 @@ public final class SendMoney {
                 null,
                 null,
                 null,
+                null,
                 "sendMoney"
         );
 
@@ -147,6 +149,7 @@ public final class SendMoney {
                 Double.parseDouble(String.format("%.14f", convertedAmount)),
                 receiverAccount.getCurrency(),
                 "received",
+                null,
                 null,
                 null,
                 null,

@@ -77,7 +77,17 @@ public class CommandHandler {
             case "withdrawSavings":
                 handleWithdrawSavings(command, objectNode, output);
                 break;
-
+            case "upgradePlan":
+                try {
+                    bank.processCommand(command);
+                } catch (IllegalArgumentException e) {
+                    final var errorNode = objectMapper.createObjectNode();
+                    errorNode.put("description", e.getMessage());
+                    errorNode.put("timestamp", command.getTimestamp());
+                    objectNode.set("output", errorNode);
+                    output.add(objectNode);
+                }
+                break;
 
             default:
                 objectNode.put("type", "error");

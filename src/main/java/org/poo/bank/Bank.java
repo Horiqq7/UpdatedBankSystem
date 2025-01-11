@@ -11,6 +11,7 @@ import org.poo.bank.commands.account_commands.card_commands.DeleteCard;
 import org.poo.bank.commands.pay_commands.PayOnline;
 import org.poo.bank.commands.pay_commands.SendMoney;
 import org.poo.bank.commands.pay_commands.SplitPayment;
+import org.poo.bank.commands.plan_commands.UpgradePlan;
 import org.poo.bank.commands.print_commands.PrintTransactions;
 import org.poo.bank.commands.print_commands.PrintUsers;
 import org.poo.bank.commands.report_commands.AbstractReportCommand;
@@ -133,6 +134,11 @@ public class Bank {
             case "withdrawSavings":
                 WithdrawSavings withdrawSavings = new WithdrawSavings(users);
                 return withdrawSavings.withdrawSavings(command);
+            case "upgradePlan":
+                UpgradePlan upgradePlanProcessor = new UpgradePlan(users);
+                upgradePlanProcessor.execute(command);
+                return Collections.emptyList();
+
             default:
                 throw new IllegalArgumentException("Unknown command: "
                         + command.getCommand());
