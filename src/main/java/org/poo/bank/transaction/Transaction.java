@@ -209,6 +209,10 @@ public final class Transaction {
                 map.put("accountIBAN", senderIBAN);
                 map.put("newPlanType", newPlanType);  // Adăugăm câmpul newPlanType
                 break;
+            case "cashWithdrawalError":
+                map.put("timestamp", timestamp);
+                map.put("description", description);
+                break;
 
             default:
                 break;

@@ -84,10 +84,10 @@ public class Cashback {
         double cashbackInAccountCurrency = exchangeRateManager.convertCurrency("RON", accountCurrency, cashbackInRON);
 //
 //        // Debugging
-//        System.out.println("[DEBUG] Tranzacție în RON: " + transactionAmountInRON);
-//        System.out.println("[DEBUG] Total cheltuit în RON: " + totalSpent);
-//        System.out.println("[DEBUG] Cashback calculat în RON: " + cashbackInRON);
-//        System.out.println("[DEBUG] Cashback final în moneda contului: " + cashbackInAccountCurrency);
+        System.out.println("[DEBUG] Tranzacție în RON: " + transactionAmountInRON);
+        System.out.println("[DEBUG] Total cheltuit în RON: " + totalSpent);
+        System.out.println("[DEBUG] Cashback calculat în RON: " + cashbackInRON);
+        System.out.println("[DEBUG] Cashback final în moneda contului: " + cashbackInAccountCurrency);
 
         return cashbackInAccountCurrency;
     }

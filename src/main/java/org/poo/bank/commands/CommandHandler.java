@@ -88,6 +88,10 @@ public class CommandHandler {
                     output.add(objectNode);
                 }
                 break;
+            case "cashWithdrawal":
+                handleCashWithdrawal(command, output);
+                break;
+
 
             default:
                 objectNode.put("type", "error");
@@ -97,6 +101,38 @@ public class CommandHandler {
 
         return output;
     }
+
+    private void handleCashWithdrawal(final CommandInput command, final ArrayNode output) {
+        final ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("command", command.getCommand());
+        objectNode.put("timestamp", command.getTimestamp());
+
+        try {
+            // Procesăm retragerea
+            bank.processCommand(command);
+
+            // Dacă nu există erori, nu trebuie să adăugăm nimic în output
+        } catch (IllegalArgumentException e) {
+            // În caz de eroare, verificăm dacă mesajul este "Card not found"
+            if (e.getMessage().equals("Card not found")) {
+                final var errorNode = objectMapper.createObjectNode();
+                errorNode.put("description", "Card not found");
+                errorNode.put("timestamp", command.getTimestamp());
+                objectNode.set("output", errorNode);
+
+                // Adăugăm rezultatul în output doar în caz de eroare
+                output.add(objectNode);
+            } else {
+                final var errorNode = objectMapper.createObjectNode();
+                errorNode.put("description", e.getMessage());
+                errorNode.put("timestamp", command.getTimestamp());
+                objectNode.set("output", errorNode);
+                output.add(objectNode);
+            }
+        }
+    }
+
+
 
     private void handleWithdrawSavings(final CommandInput command, final ObjectNode objectNode, final ArrayNode output) {
         bank.processCommand(command);

@@ -19,17 +19,6 @@ public final class SendMoney {
         this.users = users;
     }
 
-    /**
-     * Transfer bani de la un utilizator la altul.
-     * Aceasta metoda verifica daca contul expeditorului si destinatarului exista,
-     * daca expeditorul are suficiente fonduri si se efectueaza tranzactia.
-     * In cazul in care monedele diferite sunt implicate, se efectueaza conversia valutara.
-     * Daca tranzactia nu poate fi realizata, sunt adaugate erori corespunzatoare in
-     * lista de iesire.
-     *
-     * @param command comanda care contine detaliile tranzactiei.
-     * @return lista de erori, daca exista, sau lista goala daca tranzactia a avut succes
-     */
     public List<Map<String, Object>> sendMoney(final CommandInput command) {
         List<Map<String, Object>> output = new ArrayList<>();
         String senderIBAN = command.getAccount();
@@ -146,59 +135,87 @@ public final class SendMoney {
         double comisionInAccountCurrency = 0.0; // Inițializăm variabila pentru comisionul în moneda contului
 
         try {
-            // Verificăm dacă expeditorul are planul "silver"
-            if ("silver".equalsIgnoreCase(senderUser.getPlan())) {
-                // Convertim suma în RON pentru calculul comisionului, dacă moneda nu este deja RON
-                if (!senderAccount.getCurrency().equalsIgnoreCase("RON")) {
-                    amountRON = ExchangeRateManager.getInstance().convertCurrency(
-                            senderAccount.getCurrency(),
-                            "RON",
-                            amount
-                    );
-                } else {
-                    amountRON = amount; // Dacă moneda este deja RON, nu facem conversia
-                }
+            // Obținem planul utilizatorului
+            String userPlan = senderUser.getPlan();
 
-                // Aplicăm comisionul dacă suma în RON depășește 500
-                if (amountRON > 500) {
-                    comision = 0.1 / 100 * amountRON; // Calculăm comisionul ca 0.1% din suma în RON
-                    System.out.println("Comision aplicat: " + comision + " RON");
-                }
-
-                // Convertim comisionul din RON în moneda contului expeditorului, dacă este necesar
-                if (!senderAccount.getCurrency().equalsIgnoreCase("RON")) {
-                    comisionInAccountCurrency = ExchangeRateManager.getInstance().convertCurrency(
-                            "RON",
-                            senderAccount.getCurrency(),
-                            comision
-                    );
-                } else {
-                    comisionInAccountCurrency = comision; // Dacă moneda este deja RON, comisionul rămâne neschimbat
-                }
-
-                System.out.println("Comisionul în moneda contului expeditorului (" + senderAccount.getCurrency() + "): " + comisionInAccountCurrency);
-
-                // Retragem comisionul din contul expeditorului
-                senderAccount.withdrawFunds(comisionInAccountCurrency);
+            // Convertim suma în RON pentru calculul comisionului, dacă moneda nu este deja RON
+            if (!senderAccount.getCurrency().equalsIgnoreCase("RON")) {
+                amountRON = ExchangeRateManager.getInstance().convertCurrency(
+                        senderAccount.getCurrency(),
+                        "RON",
+                        amount
+                );
             } else {
-                // Nu se aplică comision dacă planul nu este "silver"
-                System.out.println("Niciun comision nu a fost aplicat, planul expeditorului: " + senderUser.getPlan());
+                amountRON = amount; // Dacă moneda este deja RON, nu facem conversia
             }
+
+            // Calculăm comisionul în funcție de planul utilizatorului
+            switch (userPlan.toLowerCase()) {
+                case "student":
+                    // Nu se percepe comision pentru niciun fel de tranzacție
+                    comision = 0.0;
+                    break;
+
+                case "silver":
+                    // Dacă suma în RON depășește 500, aplicăm un comision de 0.1%
+                    if (amountRON > 500) {
+                        comision = 0.1 / 100 * amountRON;
+                    }
+                    break;
+
+                case "gold":
+                    // Nu se percepe comision pentru niciun fel de tranzacție
+                    comision = 0.0;
+                    break;
+
+                case "standard":
+                default:
+                    // Planul standard percepe un comision de 0.2% din suma în RON
+                    comision = 0.2 / 100 * amountRON;
+                    break;
+            }
+
+            // Convertim comisionul din RON în moneda contului expeditorului, dacă este necesar
+            if (!senderAccount.getCurrency().equalsIgnoreCase("RON")) {
+                comisionInAccountCurrency = ExchangeRateManager.getInstance().convertCurrency(
+                        "RON",
+                        senderAccount.getCurrency(),
+                        comision
+                );
+            } else {
+                comisionInAccountCurrency = comision; // Dacă moneda este deja RON, comisionul rămâne neschimbat
+            }
+
+            // Retragem comisionul din contul expeditorului doar dacă există un comision de aplicat
+            if (comisionInAccountCurrency > 0.0) {
+                // Verificăm dacă expeditorul are suficientă balanță pentru comision
+                if (senderAccount.getBalance() < comisionInAccountCurrency) {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("description", "Insufficient funds to cover the commission");
+                    output.add(error);
+                    return output;
+                }
+
+                senderAccount.withdrawFunds(comisionInAccountCurrency);
+            }
+
         } catch (IllegalArgumentException e) {
-            // Gestionăm cazul în care nu există cursuri de schimb valabile
             Map<String, Object> error = new HashMap<>();
             error.put("description", "Exchange rates not available for commission calculation");
             output.add(error);
             return output;
         }
 
+        if (senderAccount.getBalance() < amount) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("description", "Insufficient funds in sender account after commission");
+            output.add(error);
+            return output;
+        }
 
-
-        // Efectuăm tranzacțiile
         senderAccount.withdrawFunds(amount);
         receiverAccount.addFunds(convertedAmount);
 
-        // Creăm tranzacțiile pentru expeditor și destinatar
         Transaction senderTransaction = new Transaction(
                 timestamp,
                 description,
@@ -238,11 +255,6 @@ public final class SendMoney {
 
         receiverUser.addTransaction(receiverTransaction);
         receiverAccount.addTransaction(receiverTransaction);
-
-        // Adăugăm mesaj de debug
-        System.out.println("Suma trimisă inițial: " + amount + " " + senderAccount.getCurrency());
-        System.out.println("Comisionul aplicat: " + comision + " RON");
-        System.out.println("Suma finală trimisă după comision: " + (convertedAmount) + " " + receiverAccount.getCurrency());
 
         return Collections.emptyList();
     }

@@ -17,6 +17,7 @@ import org.poo.bank.commands.print_commands.PrintUsers;
 import org.poo.bank.commands.report_commands.AbstractReportCommand;
 import org.poo.bank.commands.report_commands.SpendingsReport;
 import org.poo.bank.commands.report_commands.Report;
+import org.poo.bank.commands.withdrawal.CashWithdrawal;
 import org.poo.fileio.CommandInput;
 import org.poo.fileio.CommerciantInput;
 import org.poo.fileio.ObjectInput;
@@ -137,6 +138,17 @@ public class Bank {
             case "upgradePlan":
                 UpgradePlan upgradePlanProcessor = new UpgradePlan(users);
                 upgradePlanProcessor.execute(command);
+                return Collections.emptyList();
+            case "cashWithdrawal":
+                // Folosim CashWithdrawal pentru a executa retragerea de numerar
+                CashWithdrawal.executeCashWithdrawal(
+                        command.getCardNumber(),
+                        command.getAmount(),
+                        command.getEmail(),
+                        command.getLocation(),
+                        command.getTimestamp(),
+                        getUsers()
+                );
                 return Collections.emptyList();
 
             default:

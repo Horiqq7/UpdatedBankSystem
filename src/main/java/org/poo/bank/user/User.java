@@ -33,7 +33,15 @@ public final class User {
         this.email = input.getEmail();
         this.birthDate = input.getBirthDate();
         this.occupation = input.getOccupation();
+
+        // Setăm planul în funcție de ocupație
+        if ("student".equalsIgnoreCase(this.occupation)) {
+            this.plan = "student";
+        } else {
+            this.plan = "standard"; // Pentru orice altă ocupație
+        }
     }
+
 
     /**
      * Returneaza primul cont clasic in moneda specificata.

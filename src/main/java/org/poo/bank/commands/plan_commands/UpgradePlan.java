@@ -31,9 +31,9 @@ public class UpgradePlan {
         String currentPlan = user.getPlan() == null ? "standard" : user.getPlan();
         String newPlan = command.getNewPlanType();
 
-        // Debugging: Afișăm planul actual și planul nou
-        System.out.println("Current plan: " + currentPlan);
-        System.out.println("New plan: " + newPlan);
+//        // Debugging: Afișăm planul actual și planul nou
+//        System.out.println("Current plan: " + currentPlan);
+//        System.out.println("New plan: " + newPlan);
 
         // Validăm dacă planul curent este același cu noul
         if (currentPlan.equalsIgnoreCase(newPlan)) {
@@ -57,15 +57,15 @@ public class UpgradePlan {
         // Deductăm taxa din contul utilizatorului
         account.withdrawFunds(feeInAccountCurrency);
 
-        // Debugging: Afișăm mesajul de succes după retragerea taxei
-        System.out.println("Fee deducted: " + feeInAccountCurrency + " " + account.getCurrency());
+//        // Debugging: Afișăm mesajul de succes după retragerea taxei
+//        System.out.println("Fee deducted: " + feeInAccountCurrency + " " + account.getCurrency());
 
         // Actualizăm planul utilizatorului
         user.setPlan(newPlan);
 
-        // Debugging: Verificăm dacă planul a fost actualizat corect
-        System.out.println("Updated plan: " + user.getPlan());
-        System.out.println(command.getTimestamp());
+//        // Debugging: Verificăm dacă planul a fost actualizat corect
+//        System.out.println("Updated plan: " + user.getPlan());
+//        System.out.println(command.getTimestamp());
 
         // Creăm tranzacția pentru upgrade
         Transaction upgradeTransaction = new Transaction(

@@ -107,6 +107,8 @@ public final class ExchangeRateManager {
             }
         }
 
+        // Dacă nu există o cale valabilă între monede
         return 0;
     }
+
 }
