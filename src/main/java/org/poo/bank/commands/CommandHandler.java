@@ -91,6 +91,9 @@ public class CommandHandler {
             case "cashWithdrawal":
                 handleCashWithdrawal(command, output);
                 break;
+            case "acceptSplitPayment":
+                bank.processCommand(command);
+                break;
 
 
             default:

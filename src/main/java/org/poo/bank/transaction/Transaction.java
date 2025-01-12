@@ -230,7 +230,16 @@ public final class Transaction {
                 map.put("description", description);
                 map.put("amount", amount);
                 map.put("currency", currency);
-
+                break;
+            case "acceptSplitPayment":
+                map.put("timestamp", timestamp);
+                map.put("description", description);
+                map.put("senderIBAN", senderIBAN);
+                map.put("receiverIBAN", receiverIBAN);
+                map.put("amount", amount + " " + currency);
+                map.put("transferType", transferType);
+                break;
+                
             default:
                 break;
         }

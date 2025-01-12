@@ -1,9 +1,8 @@
 package org.poo.bank.commands.pay_commands;
 
 import org.poo.bank.account.Account;
-import org.poo.bank.transaction.Transaction;
-import org.poo.fileio.CommandInput;
 import org.poo.bank.exchange_rates.ExchangeRateManager;
+import org.poo.fileio.CommandInput;
 import org.poo.bank.user.User;
 
 import java.util.ArrayList;
@@ -27,25 +26,36 @@ public final class SplitPayment {
     public List<Map<String, Object>> splitPayment(final CommandInput command) {
         List<Map<String, Object>> output = new ArrayList<>();
         List<String> accountIBANs = command.getAccounts();
-        double amount = command.getAmount();
+        double totalAmount = command.getAmount();
         String currency = command.getCurrency();
         int timestamp = command.getTimestamp();
+        List<Double> amountForUsers = command.getAmountForUsers();
 
-        if (amount <= 0) {
+        // Verifică dacă totalAmount este valid
+        if (totalAmount <= 0) {
             Map<String, Object> error = new HashMap<>();
             error.put("description", "Invalid amount");
             output.add(error);
             return output;
         }
 
-        double splitAmount = amount / accountIBANs.size();
+        // Verifică dacă amountForUsers nu este null și are aceeași dimensiune ca lista conturilor
+        if (amountForUsers == null || amountForUsers.size() != accountIBANs.size()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("description", "Mismatch between accounts and amounts");
+            output.add(error);
+            return output;
+        }
+
+        // Verifică existența conturilor și disponibilitatea fondurilor
+        Account problematicAccount = null;
         ExchangeRateManager exchangeRateManager = ExchangeRateManager.getInstance();
 
-        Account problematicAccount = null;
+        for (int i = 0; i < accountIBANs.size(); i++) {
+            String accountIBAN = accountIBANs.get(i);
+            double amountForUser = amountForUsers.get(i);
 
-        for (String accountIBAN : accountIBANs) {
             Account account = null;
-
             for (User u : users) {
                 account = u.getAccountByIBAN(accountIBAN);
                 if (account != null) {
@@ -62,15 +72,14 @@ public final class SplitPayment {
                 return output;
             }
 
-            double convertedAmount = splitAmount;
+            // Verifică dacă contul are suficiente fonduri
+            double convertedAmount = amountForUser;
             if (!currency.equalsIgnoreCase(account.getCurrency())) {
                 try {
-                    convertedAmount = exchangeRateManager.convertCurrency(currency,
-                            account.getCurrency(), splitAmount);
+                    convertedAmount = exchangeRateManager.convertCurrency(currency, account.getCurrency(), amountForUser);
                 } catch (IllegalArgumentException e) {
                     Map<String, Object> error = new HashMap<>();
-                    error.put("description", "Conversion rate not available for "
-                            + currency + " to " + account.getCurrency());
+                    error.put("description", "Conversion rate not available for " + currency + " to " + account.getCurrency());
                     error.put("involvedAccounts", accountIBANs);
                     error.put("timestamp", timestamp);
                     output.add(error);
@@ -78,103 +87,35 @@ public final class SplitPayment {
                 }
             }
 
+            // Verifică dacă există fonduri suficiente în contul utilizatorului
             if (account.getBalance() < convertedAmount) {
                 problematicAccount = account;
+                break;  // Dacă un cont nu are fonduri suficiente, ieșim din buclă
             }
+
+            // Blochează banii din contul utilizatorului pentru a preveni tranzacțiile ulterioare
+            account.blockFunds(convertedAmount);
         }
 
+        // Dacă un cont are fonduri insuficiente
         if (problematicAccount != null) {
             Map<String, Object> error = new HashMap<>();
-            error.put("amount", splitAmount);
+            error.put("amount", totalAmount);
             error.put("currency", currency);
-            error.put("description", "Split payment of "
-                    + String.format("%.2f", amount) + " " + currency);
-            error.put("error", "Account " + problematicAccount.getIban()
-                    + " has insufficient funds for a split payment.");
+            error.put("description", "Split payment of " + String.format("%.2f", totalAmount) + " " + currency);
+            error.put("error", "Account " + problematicAccount.getIban() + " has insufficient funds for a split payment.");
             error.put("involvedAccounts", accountIBANs);
             error.put("timestamp", timestamp);
-
-            for (String accountIBAN : accountIBANs) {
-                User user = null;
-                Account account = null;
-
-                for (User u : users) {
-                    account = u.getAccountByIBAN(accountIBAN);
-                    if (account != null) {
-                        user = u;
-                        break;
-                    }
-                }
-
-                if (user != null && account != null) {
-                    Transaction errorTransaction = new Transaction(
-                            timestamp,
-                            "Split payment of " + String.format("%.2f", amount) + " " + currency,
-                            null,
-                            accountIBAN,
-                            splitAmount,
-                            currency,
-                            null,
-                            null,
-                            null,
-                            null,
-                            accountIBANs,
-                            "Account " + problematicAccount.getIban()
-                                    + " has insufficient funds for a split payment.",
-                            null,
-                            true,
-                            "splitPaymentError"
-                    );
-                    user.addTransaction(errorTransaction);
-                    account.addTransaction(errorTransaction);
-                }
-            }
-
             output.add(error);
             return output;
         }
 
-        for (String accountIBAN : accountIBANs) {
-            Account account = null;
-            User user = null;
-
-            for (User u : users) {
-                account = u.getAccountByIBAN(accountIBAN);
-                if (account != null) {
-                    user = u;
-                    break;
-                }
-            }
-
-            double convertedAmount = splitAmount;
-            if (!currency.equalsIgnoreCase(account.getCurrency())) {
-                convertedAmount = exchangeRateManager.convertCurrency(currency,
-                        account.getCurrency(), splitAmount);
-            }
-
-            account.setBalance(account.getBalance() - convertedAmount);
-
-            Transaction splitTransaction = new Transaction(
-                    timestamp,
-                    "Split payment of " + String.format("%.2f", amount) + " " + currency,
-                    null,
-                    accountIBAN,
-                    splitAmount,
-                    currency,
-                    null,
-                    null,
-                    null,
-                    null,
-                    accountIBANs,
-                    null,
-                    null,
-                    true,
-                    "splitPayment"
-            );
-
-            user.addTransaction(splitTransaction);
-            account.addTransaction(splitTransaction);
-        }
+        // Dacă nu au apărut erori, trimitem un mesaj de succes
+        Map<String, Object> success = new HashMap<>();
+        success.put("description", "Split payment of " + String.format("%.2f", totalAmount) + " " + currency);
+        success.put("accounts", accountIBANs);
+        success.put("timestamp", timestamp);
+        output.add(success);
 
         return output;
     }

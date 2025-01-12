@@ -20,6 +20,7 @@ public final class Account {
     private List<Card> cards;
     private List<Transaction> transactions;
     private double interestRate;
+    private double blockedFunds;
 
     private Account(final AccountBuilder builder) {
         this.iban = builder.iban;
@@ -31,6 +32,35 @@ public final class Account {
         this.transactions = builder.accountTransactions != null
                 ? builder.accountTransactions : new ArrayList<>();
         this.interestRate = builder.accountInterestRate;
+        this.blockedFunds = 0;
+    }
+
+
+    public void blockFunds(double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to block must be greater than zero");
+        }
+        if (amount > balance) {
+            throw new IllegalArgumentException("Insufficient funds to block");
+        }
+        blockedFunds += amount;  // Actualizăm fondurile blocate
+    }
+
+
+    // Metoda pentru a debloca fonduri
+    public void unblockFunds(double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to unblock must be greater than zero");
+        }
+        if (blockedFunds < amount) {
+            throw new IllegalArgumentException("Cannot unblock more funds than currently blocked");
+        }
+        blockedFunds -= amount;  // Deblocăm suma
+    }
+
+    // Metoda pentru a obține fondurile blocate
+    public double getBlockedFunds() {
+        return blockedFunds;
     }
 
     /**

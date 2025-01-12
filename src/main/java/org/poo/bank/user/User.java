@@ -26,6 +26,7 @@ public final class User {
     private final String birthDate;
     private final String occupation;
     private String plan;
+    private double amountOwedForSplitPayment;
 
     public User(final UserInput input) {
         this.firstName = input.getFirstName();
@@ -56,6 +57,15 @@ public final class User {
             }
         }
         return null;
+    }
+
+    public void setAmountOwedForSplitPayment(double amount) {
+        this.amountOwedForSplitPayment = amount;
+    }
+
+    // Metodă pentru a obține suma datorată pentru un split payment
+    public double getAmountOwedForSplitPayment() {
+        return amountOwedForSplitPayment;
     }
 
 

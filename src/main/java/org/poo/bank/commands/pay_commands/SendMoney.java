@@ -72,32 +72,6 @@ public final class SendMoney {
         }
 
         // Verificăm dacă expeditorul are suficiente fonduri
-        if (senderAccount.getBalance() < amount) {
-            Transaction insufficientFundsTransaction = new Transaction(
-                    timestamp,
-                    "Insufficient funds",
-                    senderIBAN,
-                    receiverIBAN,
-                    amount,
-                    senderAccount.getCurrency(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    true,
-                    "sendMoneyInsufficientFunds"
-            );
-            senderUser.addTransaction(insufficientFundsTransaction);
-            senderAccount.addTransaction(insufficientFundsTransaction);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("description", "Insufficient funds in sender account");
-            output.add(error);
-            return output;
-        }
 
         // Calculăm suma convertită dacă monedele sunt diferite
         double convertedAmount = amount;
@@ -131,6 +105,9 @@ public final class SendMoney {
                 return output;
             }
         }
+
+
+
 
         double comision = 0.0;
         double comisionInAccountCurrency = 0.0; // Inițializăm variabila pentru comisionul în moneda contului
@@ -197,7 +174,9 @@ public final class SendMoney {
                     return output;
                 }
 
-                senderAccount.withdrawFunds(comisionInAccountCurrency);
+                if (senderAccount.getBalance() > amount + comisionInAccountCurrency) {
+                    senderAccount.withdrawFunds(comisionInAccountCurrency);
+                }
             }
 
         } catch (IllegalArgumentException e) {
@@ -207,12 +186,41 @@ public final class SendMoney {
             return output;
         }
 
-        if (senderAccount.getBalance() < amount) {
+//        if (senderAccount.getBalance() < amount) {
+//            Map<String, Object> error = new HashMap<>();
+//            error.put("description", "Insufficient funds in sender account after commission");
+//            output.add(error);
+//            return output;
+//        }
+
+        System.out.println(amount + " " + command.getTimestamp());
+        if (senderAccount.getBalance() < amount + comisionInAccountCurrency) {
+            Transaction insufficientFundsTransaction = new Transaction(
+                    timestamp,
+                    "Insufficient funds",
+                    senderIBAN,
+                    receiverIBAN,
+                    amount,
+                    senderAccount.getCurrency(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    true,
+                    "sendMoneyInsufficientFunds"
+            );
+            senderUser.addTransaction(insufficientFundsTransaction);
+            senderAccount.addTransaction(insufficientFundsTransaction);
+
             Map<String, Object> error = new HashMap<>();
-            error.put("description", "Insufficient funds in sender account after commission");
+            error.put("description", "Insufficient funds in sender account");
             output.add(error);
             return output;
         }
+
 
         senderAccount.withdrawFunds(amount);
         receiverAccount.addFunds(convertedAmount);

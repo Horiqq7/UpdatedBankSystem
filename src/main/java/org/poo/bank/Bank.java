@@ -8,6 +8,7 @@ import org.poo.bank.commands.account_commands.card_commands.CheckCardStatus;
 import org.poo.bank.commands.account_commands.card_commands.CreateCard;
 import org.poo.bank.commands.account_commands.card_commands.CreateOneTimeCard;
 import org.poo.bank.commands.account_commands.card_commands.DeleteCard;
+import org.poo.bank.commands.pay_commands.AcceptSplitPayment;
 import org.poo.bank.commands.pay_commands.PayOnline;
 import org.poo.bank.commands.pay_commands.SendMoney;
 import org.poo.bank.commands.pay_commands.SplitPayment;
@@ -150,10 +151,28 @@ public class Bank {
                         getUsers()
                 );
                 return Collections.emptyList();
+            case "acceptSplitPayment":
+                AcceptSplitPayment acceptSplitPaymentProcessor = new AcceptSplitPayment(users, getCommands());
+                Map<String, Object> acceptResult = acceptSplitPaymentProcessor.acceptSplitPayment(command);
+                if (acceptResult != null) {
+                    return List.of(acceptResult);
+                } else {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("description", "Failed to process the split payment acceptance");
+                    return List.of(error);
+                }
 
             default:
                 throw new IllegalArgumentException("Unknown command: "
                         + command.getCommand());
         }
+    }
+
+    // Metodă pentru a obține comenzile procesate până acum
+    public List<CommandInput> getCommands() {
+        // Aici ar trebui să se adauge logica pentru a obține comenzile deja procesate
+        // Dacă comenzi sunt salvate undeva în bancă sau altă locație, le returnăm
+        // De exemplu, puteți adăuga comenzile într-o listă internă de comenzi procesate
+        return new ArrayList<>();
     }
 }
