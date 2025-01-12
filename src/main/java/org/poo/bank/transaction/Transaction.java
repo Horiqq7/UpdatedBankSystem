@@ -23,7 +23,8 @@ public final class Transaction {
     private final String commerciant;
     private final List<String> involvedAccounts;
     private final String error;
-    private final String newPlanType;  // Adăugăm câmpul newPlanType
+    private final String newPlanType;
+    private final boolean success;// Adăugăm câmpul newPlanType
 
     /**
      * Constructor pentru crearea unei tranzactii.
@@ -47,7 +48,8 @@ public final class Transaction {
                        final String receiverIBAN, final double amount, final String currency,
                        final String transferType, final String card, final String cardHolder,
                        final String commerciant, final List<String> involvedAccounts,
-                       final String error, final String newPlanType, final String transactionType) {
+                       final String error, final String newPlanType,
+                       final boolean success, final String transactionType) {
         this.timestamp = timestamp;
         this.description = description;
         this.senderIBAN = senderIBAN;
@@ -57,11 +59,16 @@ public final class Transaction {
         this.transferType = transferType;
         this.card = card;
         this.cardHolder = cardHolder;
-        this.commerciant = commerciant;
+        this.commerciant = commerciant != null ? commerciant : "";  // Setăm o valoare implicită, dacă este null
         this.involvedAccounts = involvedAccounts;
         this.transactionType = transactionType;
         this.error = error;
-        this.newPlanType = newPlanType;  // Setăm noul câmp
+        this.success = success;
+        this.newPlanType = newPlanType;
+    }
+
+    public boolean isSuccessful() {
+        return success;
     }
 
     public List<String> getInvolvedAccounts() {

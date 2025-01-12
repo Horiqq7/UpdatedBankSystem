@@ -87,6 +87,7 @@ public final class SendMoney {
                     null,
                     null,
                     null,
+                    true,
                     "sendMoneyInsufficientFunds"
             );
             senderUser.addTransaction(insufficientFundsTransaction);
@@ -230,6 +231,7 @@ public final class SendMoney {
                 null,
                 null,
                 null,
+                true,
                 "sendMoney"
         );
 
@@ -247,6 +249,7 @@ public final class SendMoney {
                 null,
                 null,
                 null,
+                true,
                 "sendMoney"
         );
 

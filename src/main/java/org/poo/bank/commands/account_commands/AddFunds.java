@@ -43,6 +43,7 @@ public final class AddFunds {
                         null,
                         null,
                         null,
+                        true,
                         "addFunds"
                 );
                 account.addTransaction(transaction);

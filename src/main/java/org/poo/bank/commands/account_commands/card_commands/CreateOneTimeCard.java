@@ -54,6 +54,7 @@ public final class CreateOneTimeCard {
                 null,
                 null,
                 null,
+                true,
                 "createCard"
         );
         account.addTransaction(transaction);

@@ -56,6 +56,7 @@ public final class AddAccount {
                 null,
                 null,
                 null,
+                true,
                 "addAccount"
         );
 

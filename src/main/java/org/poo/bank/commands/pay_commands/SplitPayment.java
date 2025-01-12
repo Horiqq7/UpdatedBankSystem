@@ -122,6 +122,7 @@ public final class SplitPayment {
                             "Account " + problematicAccount.getIban()
                                     + " has insufficient funds for a split payment.",
                             null,
+                            true,
                             "splitPaymentError"
                     );
                     user.addTransaction(errorTransaction);
@@ -167,6 +168,7 @@ public final class SplitPayment {
                     accountIBANs,
                     null,
                     null,
+                    true,
                     "splitPayment"
             );
 

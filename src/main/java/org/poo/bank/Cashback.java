@@ -1,74 +1,101 @@
 package org.poo.bank;
 
+import org.poo.bank.account.Account;
 import org.poo.bank.exchange_rates.ExchangeRateManager;
+import org.poo.bank.transaction.Transaction;
 import org.poo.fileio.CommerciantInput;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Cashback {
-    private Map<String, Integer> transactionsCount;  // Contor pentru tranzacțiile realizate
-    private Map<String, Double> spendingTotal;       // Totalul cheltuit pe comercianți
+    private Map<String, Map<String, Integer>> transactionsCount;  // Harta pentru tranzacții per utilizator și comerciant
+    private Map<String, Map<String, Double>> spendingTotal; // Totalul cheltuielilor pentru fiecare utilizator și comerciant
 
     public Cashback() {
         transactionsCount = new HashMap<>();
         spendingTotal = new HashMap<>();
     }
 
-    public double applyCashback(String commerciant, double transactionAmount, String userPlan, CommerciantInput commerciantInput, String transactionCurrency, String accountCurrency, ExchangeRateManager exchangeRateManager) {
+    public double applyCashback(String email, String accountId, String commerciant, double transactionAmount,
+                                String userPlan, CommerciantInput commerciantInput, String transactionCurrency,
+                                String accountCurrency, ExchangeRateManager exchangeRateManager, Account account) {
         if (userPlan == null) {
             userPlan = "standard"; // Comportament implicit
         }
 
         String cashbackStrategy = commerciantInput.getCashbackStrategy();
-//        System.out.println(cashbackStrategy + " " + commerciant);
         double cashback = 0.0;
 
         if ("nrOfTransactions".equalsIgnoreCase(cashbackStrategy)) {
-            cashback = handleNrOfTransactionsCashback(commerciant, transactionAmount, commerciantInput.getType());
-        } else if ("spendingThreshold".equalsIgnoreCase(cashbackStrategy)) {
-            cashback = handleSpendingThresholdCashback(commerciant, transactionAmount, userPlan, transactionCurrency, accountCurrency, exchangeRateManager);
+            cashback = handleNrOfTransactionsCashback(
+                    account,
+                    commerciant,
+                    transactionAmount,
+                    commerciantInput.getType(),
+                    transactionCurrency, // Folosim direct transactionCurrency
+                    accountCurrency,      // Adăugăm accountCurrency
+                    exchangeRateManager   // Adăugăm exchangeRateManager
+            );
+        }
+        else if ("spendingThreshold".equalsIgnoreCase(cashbackStrategy)) {
+            cashback = handleSpendingThresholdCashback(email, accountId, commerciant, transactionAmount, userPlan,
+                    transactionCurrency, accountCurrency, exchangeRateManager);
         }
 
         return cashback;
     }
 
-    private double handleNrOfTransactionsCashback(String commerciant, double transactionAmount, String category) {
-        transactionsCount.put(category, transactionsCount.getOrDefault(category, 0) + 1);
+    private double handleNrOfTransactionsCashback(Account account, String commerciant, double transactionAmount, String category, String transactionCurrency, String accountCurrency, ExchangeRateManager exchangeRateManager) {
+        // Obținem numărul de tranzacții valide din Account
+        int transactionCount = account.getTransactionsCountForCommerciant(commerciant, true);  // True indică să numărăm doar tranzacțiile efectuate cu succes
 
-        int count = transactionsCount.get(category);
         double cashbackPercentage = 0.0;
+        System.out.println("nrOfTran " + transactionCount + " " + commerciant);
 
-        if (category.equals("Food") && count == 2) {
-            cashbackPercentage = 0.02;
-        } else if (category.equals("Clothes") && count == 5) {
-            cashbackPercentage = 0.05;
-        } else if (category.equals("Tech") && count == 10) {
-            cashbackPercentage = 0.10;
+        // Stabilim procentajul de cashback pe baza numărului de tranzacții
+        if (category.equals("Food") && transactionCount == 2) {
+            cashbackPercentage = 0.02; // 2% cashback pentru 2 tranzacții la Food
+        } else if (category.equals("Clothes") && transactionCount == 5) {
+            cashbackPercentage = 0.05; // 5% cashback pentru 5 tranzacții la Clothes
+        } else if (category.equals("Tech") && transactionCount == 10) {
+            cashbackPercentage = 0.10; // 10% cashback pentru 10 tranzacții la Tech
         }
 
-        return cashbackPercentage * transactionAmount;
+        if (cashbackPercentage > 0) {
+            double cashbackAmount = cashbackPercentage * transactionAmount;
+
+            // Dacă moneda tranzacției și moneda contului sunt diferite, facem conversia
+            if (!transactionCurrency.equalsIgnoreCase(accountCurrency)) {
+                cashbackAmount = cashbackAmount * exchangeRateManager.getExchangeRate(transactionCurrency, accountCurrency);
+            }
+
+            return cashbackAmount;
+        }
+
+        return 0.0; // Dacă nu se aplică cashback, returnăm 0
     }
 
+
+
     private double handleSpendingThresholdCashback(
-            String commerciant,
-            double transactionAmount,
-            String userPlan,
-            String transactionCurrency,
-            String accountCurrency,
+            String email, String accountId, String commerciant,
+            double transactionAmount, String userPlan,
+            String transactionCurrency, String accountCurrency,
             ExchangeRateManager exchangeRateManager) {
 
-        // Verificăm dacă tranzacția este în RON; dacă nu, o convertim
         double transactionAmountInRON = transactionCurrency.equalsIgnoreCase("RON")
                 ? transactionAmount
                 : exchangeRateManager.convertCurrency(transactionCurrency, "RON", transactionAmount);
 
-        // Actualizăm suma totală cheltuită în RON pentru comerciant
-        spendingTotal.put(commerciant, spendingTotal.getOrDefault(commerciant, 0.0) + transactionAmountInRON);
-        double totalSpent = spendingTotal.get(commerciant);
+        // Actualizăm totalul cheltuielilor pentru utilizator și comerciant
+        Map<String, Double> accountSpendingTotal = spendingTotal.getOrDefault(email, new HashMap<>());
+        accountSpendingTotal.put(commerciant, accountSpendingTotal.getOrDefault(commerciant, 0.0) + transactionAmountInRON);
+        spendingTotal.put(email, accountSpendingTotal);
+
+        double totalSpent = accountSpendingTotal.get(commerciant);
         double cashbackPercentage = 0.0;
 
-        // Verificăm pragurile de cheltuieli
         if (totalSpent >= 500) {
             cashbackPercentage = getPlanPercentage(userPlan, 0.25, 0.5, 0.7);
         } else if (totalSpent >= 300) {
@@ -77,22 +104,12 @@ public class Cashback {
             cashbackPercentage = getPlanPercentage(userPlan, 0.1, 0.3, 0.5);
         }
 
-        // Calculăm cashback-ul în RON
         double cashbackInRON = cashbackPercentage * transactionAmountInRON;
-
-        // Convertim cashback-ul în moneda contului (dacă este necesar)
         double cashbackInAccountCurrency = exchangeRateManager.convertCurrency("RON", accountCurrency, cashbackInRON);
-//
-//        // Debugging
-        System.out.println("[DEBUG] Tranzacție în RON: " + transactionAmountInRON);
-        System.out.println("[DEBUG] Total cheltuit în RON: " + totalSpent);
-        System.out.println("[DEBUG] Cashback calculat în RON: " + cashbackInRON);
-        System.out.println("[DEBUG] Cashback final în moneda contului: " + cashbackInAccountCurrency);
+        System.out.println("debug cashback threshold " + cashbackInAccountCurrency + " " + commerciant);
 
         return cashbackInAccountCurrency;
     }
-
-
 
     private double getPlanPercentage(String userPlan, double standard, double silver, double gold) {
         switch (userPlan.toLowerCase()) {

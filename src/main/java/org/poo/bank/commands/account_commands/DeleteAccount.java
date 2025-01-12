@@ -62,6 +62,7 @@ public final class DeleteAccount {
                     null,
                     null,
                     null,
+                    true,
                     "deleteAccountError"
             );
 

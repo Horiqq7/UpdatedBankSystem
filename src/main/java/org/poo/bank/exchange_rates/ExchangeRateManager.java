@@ -51,10 +51,16 @@ public final class ExchangeRateManager {
      */
     private void addToGraph(final String from, final String to, final double rate) {
         exchangeGraph.putIfAbsent(from, new HashMap<>());
-        exchangeGraph.putIfAbsent(to, new HashMap<>());
         exchangeGraph.get(from).put(to, rate);
-        exchangeGraph.get(to).put(from, 1.0 / rate);
+
+        // Adaugă rata inversă corectă
+        exchangeGraph.putIfAbsent(to, new HashMap<>());
+        if (rate > 0) {
+            double inverseRate = 1.0 / rate;
+            exchangeGraph.get(to).put(from, inverseRate);
+        }
     }
+
 
     /**
      * Converteste o suma dintr-o moneda in alta folosind rata de schimb.

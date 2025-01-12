@@ -46,12 +46,12 @@ public class CashWithdrawal {
             ExchangeRateManager exchangeRateManager = ExchangeRateManager.getInstance();
             double exchangeRate = exchangeRateManager.getExchangeRate("RON", accountCurrency);
             if (exchangeRate == 0) {
-                System.out.println("Exchange rate not available");
+//                System.out.println("Exchange rate not available");
                 return; // Dacă nu există o rată de schimb, nu putem continua
             }
             // Transformăm suma din RON în moneda contului utilizatorului
             amountToWithdraw = exchangeRateManager.convertCurrency("RON", accountCurrency, amount);
-            System.out.println("Amount to withdraw in " + accountCurrency + ": " + amountToWithdraw);
+//            System.out.println("Amount to withdraw in " + accountCurrency + ": " + amountToWithdraw);
         }
 
         // Verificăm dacă utilizatorul are suficiente fonduri în cont
@@ -74,6 +74,7 @@ public class CashWithdrawal {
                     null,
                     null,
                     null,
+                    true,
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction1);
@@ -106,8 +107,8 @@ public class CashWithdrawal {
                 fee = 0.002 * amountToWithdraw;
                 break;
         }
-
-        System.out.println("Comisionul pentru utilizatorul cu planul " + userPlan + " este: " + fee + " RON");
+//
+//        System.out.println("Comisionul pentru utilizatorul cu planul " + userPlan + " este: " + fee + " RON");
 
         double totalAmountToWithdraw = amountToWithdraw + fee;
 
@@ -126,6 +127,7 @@ public class CashWithdrawal {
                     null,
                     null,
                     null,
+                    true,
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction2);
@@ -151,12 +153,13 @@ public class CashWithdrawal {
                 null,
                 null,
                 null,
+                true,
                 "cashWithdrawal"
         );
         user.addTransaction(cashWithdrawalTransaction);
         account.addTransaction(cashWithdrawalTransaction);
-
-        System.out.println("Cash withdrawal înregistrat cu succes pentru utilizatorul " + user.getEmail());
+//
+//        System.out.println("Cash withdrawal înregistrat cu succes pentru utilizatorul " + user.getEmail());
     }
 
 }

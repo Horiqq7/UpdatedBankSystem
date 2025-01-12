@@ -61,6 +61,7 @@ public final class CheckCardStatus {
                             null,
                             null,
                             null,
+                            true,
                             "checkCardStatusFrozen"
                     );
                     user.addTransaction(transaction);

@@ -34,6 +34,26 @@ public final class Account {
     }
 
     /**
+     * Returnează numărul de tranzacții efectuate cu un comerciant specificat.
+     *
+     * @param commerciant Numele comerciantului.
+     * @return Numărul de tranzacții realizate cu comerciantul respectiv.
+     */
+    public int getTransactionsCountForCommerciant(String commerciant, boolean successfulOnly) {
+        int count = 0;
+
+        for (Transaction transaction : transactions) {
+            if (transaction.getCommerciant().equalsIgnoreCase(commerciant) && (successfulOnly ? transaction.isSuccessful() : true)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+
+
+    /**
      * Calculeaza comisionul pentru o suma specificata.
      *
      * @param amount Suma pentru care se calculeaza comisionul.
@@ -292,6 +312,7 @@ public final class Account {
                     null,
                     null,
                     null,
+                    true,
                     "withdrawFunds"
             );
             addTransaction(transaction);
@@ -322,6 +343,7 @@ public final class Account {
                     null,
                     null,
                     null,
+                    true,
                     "addFunds"
             );
             addTransaction(transaction);
@@ -349,6 +371,7 @@ public final class Account {
                 null,
                 null,
                 null,
+                true,
                 "addCard"
         );
         addTransaction(transaction);
@@ -375,6 +398,7 @@ public final class Account {
                 null,
                 null,
                 null,
+                true,
                 "removeCard"
         );
         addTransaction(transaction);

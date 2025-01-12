@@ -20,15 +20,13 @@ import java.util.Collections;
 public final class PayOnline {
     private List<User> users;
     private List<CommerciantInput> commerciants;
+    private Map<String, Map<String, Integer>> transactionsPerCommerciant = new HashMap<>();
 
     public PayOnline(final List<User> users, final List<CommerciantInput> commerciants) {
         this.users = users;
         this.commerciants = commerciants;
     }
 
-    /**
-     * Procesează o plată online folosind comanda furnizată.
-     */
     public List<Map<String, Object>> payOnline(final CommandInput command) {
         List<Map<String, Object>> output = new ArrayList<>();
 
@@ -85,9 +83,8 @@ public final class PayOnline {
             }
         }
 
-        // Calculul comisionului in functie de planul utilizatorului
-        double comision = 0.0;
-        double comisionInAccountCurrency = 0.0;
+
+        double comisionInAccountCurrency = 0.0; // Comision în moneda contului
 
         try {
             String userPlan = user.getPlan(); // Obținem planul utilizatorului
@@ -98,13 +95,12 @@ public final class PayOnline {
             // Calculăm comisionul în funcție de planul utilizatorului
             switch (userPlan.toLowerCase()) {
                 case "student":
-                    // Nu se percepe comision pentru niciun fel de tranzacție
-                    comision = 0.0;
                     break;
 
                 case "silver":
                     // Convertim suma în RON dacă este necesar
                     double amountInRON = amount;
+                    System.out.println(amount);
                     if (!currency.equalsIgnoreCase("RON")) {
                         try {
                             amountInRON = ExchangeRateManager.getInstance()
@@ -119,50 +115,21 @@ public final class PayOnline {
                             return output;
                         }
                     }
+                    System.out.println(amountInRON);
 
-                    // Aplicăm comisionul de 0.1% dacă suma în RON depășește 500
                     if (amountInRON > 500) {
-                        comision = 0.1 / 100 * amountInRON;
+                        comisionInAccountCurrency = 0.1 / 100 * amount;
                     }
                     break;
 
                 case "gold":
-                    // Nu se percepe comision pentru niciun fel de tranzacție
-                    comision = 0.0;
                     break;
 
                 case "standard":
-                    // Convertim suma în RON dacă este necesar
-                    double amountInRONStandard = amount;
-                    if (!currency.equalsIgnoreCase("RON")) {
-                        try {
-                            amountInRONStandard = ExchangeRateManager.getInstance()
-                                    .convertCurrency(currency, "RON", amount);
-                        } catch (IllegalArgumentException e) {
-                            Map<String, Object> errorNode = new HashMap<>();
-                            errorNode.put("description", "Exchange rates not available");
-                            Map<String, Object> response = new HashMap<>();
-                            response.put("command", "payOnline");
-                            response.put("output", errorNode);
-                            output.add(response);
-                            return output;
-                        }
-                    }
-
-                    // Aplicăm comisionul de 0.2% din suma în RON
-                    comision = 0.2 / 100 * amountInRONStandard;
+                    comisionInAccountCurrency = 0.2 / 100 * amount;
+                    System.out.println("comisionul in account currency " + comisionInAccountCurrency);
+                    System.out.println(amount);
                     break;
-            }
-
-            // Convertim comisionul în moneda contului expeditorului, dacă este necesar
-            if (!account.getCurrency().equalsIgnoreCase("RON")) {
-                comisionInAccountCurrency = ExchangeRateManager.getInstance().convertCurrency(
-                        "RON",
-                        account.getCurrency(),
-                        comision
-                );
-            } else {
-                comisionInAccountCurrency = comision; // Dacă moneda este deja RON, comisionul rămâne neschimbat
             }
 
         } catch (IllegalArgumentException e) {
@@ -175,7 +142,6 @@ public final class PayOnline {
             return output;
         }
 
-        // Verificăm dacă utilizatorul are suficienți bani pentru tranzacție plus comision
         if (availableBalance < amount + comisionInAccountCurrency && card.getStatus().equals("active")) {
             Transaction transaction1 = new Transaction(
                     command.getTimestamp(),
@@ -190,18 +156,19 @@ public final class PayOnline {
                     null,
                     null,
                     null,
+                    true,
                     "payOnlineInsufficientFunds"
             );
             user.addTransaction(transaction1);
             return output;
         }
 
-        // Aplicăm comisionul și retragem fondurile
         if (comisionInAccountCurrency > 0.0) {
-            account.withdrawFunds(comisionInAccountCurrency);
+            account.withdrawFunds(comisionInAccountCurrency); // Retragem comisionul din contul expeditorului
         }
 
-        // Retragem suma pentru tranzacție
+
+
         account.withdrawFunds(amount);
         if (amount > 0) {
             Transaction transaction = new Transaction(
@@ -218,6 +185,7 @@ public final class PayOnline {
                     null,
                     null,
                     null,
+                    true,
                     "payOnline"
             );
 
@@ -225,22 +193,24 @@ public final class PayOnline {
             account.addTransaction(transaction);
         }
 
+
         Cashback cashback = new Cashback();
         String userPlan = user.getPlan();
+        CommerciantInput commerciantObj = findCommerciant(command.getCommerciant());
         double cashbackAmount = cashback.applyCashback(
+                user.getEmail(),
+                account.getIban(),
                 command.getCommerciant(),
                 command.getAmount(),
                 userPlan,
-                findCommerciant(command.getCommerciant()),
+                commerciantObj,
                 command.getCurrency(),
                 account.getCurrency(),
-                ExchangeRateManager.getInstance()
+                ExchangeRateManager.getInstance(),
+                account  // Adaugă obiectul `account` aici
         );
 
-        // Aplicarea cashback-ului
-        if (cashbackAmount > 0) {
-            account.addFunds(cashbackAmount);
-        }
+        account.addFunds(cashbackAmount);
 
         if (card instanceof OneTimeCard) {
             Transaction destroyCardTransaction = new Transaction(
@@ -257,6 +227,7 @@ public final class PayOnline {
                     null,
                     null,
                     null,
+                    true,
                     "destroyOneTimeCard"
             );
             user.addTransaction(destroyCardTransaction);
@@ -279,6 +250,7 @@ public final class PayOnline {
                     null,
                     null,
                     null,
+                    true,
                     "newOneTimeCard"
             );
             user.addTransaction(newCardTransaction);
@@ -297,4 +269,3 @@ public final class PayOnline {
         return null;
     }
 }
-

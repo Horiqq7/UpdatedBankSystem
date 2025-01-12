@@ -45,6 +45,7 @@ public final class DeleteCard {
                         null,
                         null,
                         null,
+                        true,
                         "deleteCard"
                 );
 

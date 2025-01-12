@@ -83,6 +83,7 @@ public class UpgradePlan {
                 null,
                 null,
                 user.getPlan(),
+                true,
                 "upgradePlan"
         );
 
