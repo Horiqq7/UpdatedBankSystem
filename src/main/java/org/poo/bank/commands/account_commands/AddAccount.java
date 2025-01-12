@@ -36,8 +36,9 @@ public final class AddAccount {
                 command.getAccountType())
                 .balance(0)
                 .minimumBalance(0)
-                .interestRate(0)
+                .interestRate(command.getInterestRate())
                 .build();
+
 
         user.addAccount(account);
 

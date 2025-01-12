@@ -391,7 +391,7 @@ public final class Account {
         private String type;
         private List<Card> accountCards;
         private List<Transaction> accountTransactions;
-        private double accountInterestRate = 0;
+        private double accountInterestRate;
 
         /**
          * Constructor pentru AccountBuilder.

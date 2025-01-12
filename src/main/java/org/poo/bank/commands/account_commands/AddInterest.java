@@ -1,6 +1,7 @@
 package org.poo.bank.commands.account_commands;
 
 import org.poo.bank.account.Account;
+import org.poo.bank.transaction.Transaction;
 import org.poo.fileio.CommandInput;
 import org.poo.bank.user.User;
 
@@ -15,21 +16,17 @@ public final class AddInterest {
         this.users = users;
     }
 
-    /**
-     * Adauga dobanda unui cont de economii specificat, daca este gasit.
-     *
-     * @param command Comanda care contine IBAN-ul contului si timestamp-ul.
-     * @return O lista de mapuri care contine informatii despre rezultat,
-     * inclusiv daca contul nu a fost gasit sau daca contul nu este un cont de economii.
-     */
     public List<Map<String, Object>> addInterest(final CommandInput command) {
         String targetIBAN = command.getAccount();
         int currentTimestamp = command.getTimestamp();
 
         Account targetAccount = null;
+        User targetUser = null; // Variabilă pentru a reține utilizatorul găsit.
+
         for (User user : users) {
             targetAccount = user.getAccountByIBAN(targetIBAN);
             if (targetAccount != null) {
+                targetUser = user; // Salvează utilizatorul găsit.
                 break;
             }
         }
@@ -65,9 +62,31 @@ public final class AddInterest {
         }
 
         double interestAmount = targetAccount.getBalance()
-                * targetAccount.getInterestRate() / PERCENTAGE_DIVISOR;
+                * targetAccount.getInterestRate();
         targetAccount.addFunds(interestAmount);
+
+        String description = "Interest rate income";
+        Transaction transaction = new Transaction(
+                command.getTimestamp(),
+                description,
+                null,
+                null,
+                interestAmount,
+                targetAccount.getCurrency(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "addInterestRate");
+
+        // Folosește targetUser pentru a adăuga tranzacția.
+        targetUser.addTransaction(transaction);
+        targetAccount.addTransaction(transaction);
 
         return List.of();
     }
+
 }

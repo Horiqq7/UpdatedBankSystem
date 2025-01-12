@@ -218,6 +218,11 @@ public final class Transaction {
                 map.put("description", description + String.format("%.1f", amount));
                 map.put("amount", amount);
                 break;
+            case "addInterestRate":
+                map.put("timestamp", timestamp);
+                map.put("description", description);
+                map.put("amount", amount);
+                map.put("currency", currency);
 
             default:
                 break;
