@@ -86,6 +86,8 @@ public final class WithdrawSavings {
                             null,
                             null,
                             true,
+                            null,
+                            null,
                             transactionType
                     );
                     accountHolder.addTransaction(successTransaction); // Adăugăm în istoricul utilizatorului
@@ -113,6 +115,8 @@ public final class WithdrawSavings {
                 null,
                 null,
                 true,
+                null,
+                null,
                 transactionType
         );
 

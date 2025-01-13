@@ -38,6 +38,9 @@ public class Bank {
     @Setter
     private Map<String, Account> accounts = new HashMap<>();
 
+    // Lista pentru stocarea comenzilor procesate
+    private final List<CommandInput> processedCommands = new ArrayList<>();
+
     /**
      * Constructor pentru crearea unei banci pe baza datelor de intrare.
      *
@@ -54,7 +57,6 @@ public class Bank {
             commerciants.addAll(Arrays.asList(inputData.getCommerciants()));
         }
     }
-
 
     /**
      * Proceseaza o comanda si returneaza rezultatul executarii acesteia.
@@ -123,7 +125,10 @@ public class Bank {
                         : changeInterestRateResponse;
             case "splitPayment":
                 SplitPayment splitPaymentProcessor = new SplitPayment(users);
-                return splitPaymentProcessor.splitPayment(command);
+                List<Map<String, Object>> splitPaymentResponse = splitPaymentProcessor.splitPayment(command);
+                // Salvăm comanda procesată în lista de comenzi
+                processedCommands.add(command);
+                return splitPaymentResponse.isEmpty() ? Collections.emptyList() : splitPaymentResponse;
             case "spendingsReport":
                 AbstractReportCommand spendingsReport = new SpendingsReport();
                 return List.of(spendingsReport.process(command, getUsers()));
@@ -152,7 +157,7 @@ public class Bank {
                 );
                 return Collections.emptyList();
             case "acceptSplitPayment":
-                AcceptSplitPayment acceptSplitPaymentProcessor = new AcceptSplitPayment(users, getCommands());
+                AcceptSplitPayment acceptSplitPaymentProcessor = new AcceptSplitPayment(users);
                 Map<String, Object> acceptResult = acceptSplitPaymentProcessor.acceptSplitPayment(command);
                 if (acceptResult != null) {
                     return List.of(acceptResult);
@@ -169,10 +174,7 @@ public class Bank {
     }
 
     // Metodă pentru a obține comenzile procesate până acum
-    public List<CommandInput> getCommands() {
-        // Aici ar trebui să se adauge logica pentru a obține comenzile deja procesate
-        // Dacă comenzi sunt salvate undeva în bancă sau altă locație, le returnăm
-        // De exemplu, puteți adăuga comenzile într-o listă internă de comenzi procesate
-        return new ArrayList<>();
+    public List<CommandInput> getProcessedCommands() {
+        return processedCommands;
     }
 }

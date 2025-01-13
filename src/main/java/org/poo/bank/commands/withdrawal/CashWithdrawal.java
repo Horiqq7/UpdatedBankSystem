@@ -75,6 +75,8 @@ public class CashWithdrawal {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction1);
@@ -128,6 +130,8 @@ public class CashWithdrawal {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "cashWithdrawalError"
             );
             user.addTransaction(transaction2);
@@ -154,6 +158,8 @@ public class CashWithdrawal {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "cashWithdrawal"
         );
         user.addTransaction(cashWithdrawalTransaction);

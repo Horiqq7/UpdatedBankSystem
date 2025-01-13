@@ -81,6 +81,8 @@ public final class AddInterest {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "addInterestRate");
 
         // Folosește targetUser pentru a adăuga tranzacția.

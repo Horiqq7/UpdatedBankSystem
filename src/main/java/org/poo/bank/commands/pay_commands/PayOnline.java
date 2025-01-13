@@ -157,6 +157,8 @@ public final class PayOnline {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "payOnlineInsufficientFunds"
             );
             user.addTransaction(transaction1);
@@ -186,6 +188,8 @@ public final class PayOnline {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "payOnline"
             );
 
@@ -228,6 +232,8 @@ public final class PayOnline {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "destroyOneTimeCard"
             );
             user.addTransaction(destroyCardTransaction);
@@ -251,6 +257,8 @@ public final class PayOnline {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "newOneTimeCard"
             );
             user.addTransaction(newCardTransaction);

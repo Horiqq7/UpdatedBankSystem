@@ -5,46 +5,21 @@ import org.poo.bank.transaction.Transaction;
 import org.poo.fileio.CommandInput;
 import org.poo.bank.user.User;
 
-import java.util.HashMap;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
 public final class AcceptSplitPayment {
     private final List<User> users;
-    private final List<CommandInput> commands;
 
-    public AcceptSplitPayment(final List<User> users, final List<CommandInput> commands) {
+    public AcceptSplitPayment(final List<User> users) {
         this.users = users;
-        this.commands = commands;
     }
 
-    /**
-     * Găsește comanda `splitPayment` asociată pentru un `acceptSplitPayment`.
-     *
-     * @param timestamp Timestamp-ul comenzii `acceptSplitPayment`.
-     * @return Comanda `splitPayment` asociată.
-     */
-    private CommandInput findSplitPaymentCommand(int timestamp) {
-        for (CommandInput command : commands) {
-            if ("splitPayment".equals(command.getCommand()) && command.getTimestamp() < timestamp) {
-                return command; // Găsim ultima comandă `splitPayment` înainte de această comanda
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Procesează o comandă de tip `acceptSplitPayment`, scăzând suma de plată din contul utilizatorului
-     * care acceptă plata și creând tranzacția corespunzătoare.
-     *
-     * @param command Comanda de acceptare a plății.
-     * @return Un mesaj de succes sau eroare.
-     */
     public Map<String, Object> acceptSplitPayment(final CommandInput command) {
         String email = command.getEmail();
-        int timestamp = command.getTimestamp();
 
-        // Găsește utilizatorul care a acceptat plata
         User acceptingUser = null;
         for (User user : users) {
             if (user.getEmail().equals(email)) {
@@ -54,69 +29,77 @@ public final class AcceptSplitPayment {
         }
 
         if (acceptingUser == null) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("description", "User not found");
-            return error;
+            return Map.of("description", "User not found");
         }
 
-        // Găsim comanda `splitPayment` asociată
-        CommandInput splitPaymentCommand = findSplitPaymentCommand(timestamp);
-        if (splitPaymentCommand == null) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("description", "Associated splitPayment command not found");
-            return error;
+        List<String> accountIBANs = SplitPayment.getSplitPaymentAccounts();
+        if (accountIBANs == null || accountIBANs.isEmpty()) {
+            return Map.of("description", "No split payment accounts found");
         }
 
-        // Obține informațiile din comanda `splitPayment`
-        List<String> accountIBANs = splitPaymentCommand.getAccounts();
-        List<Double> amountForUsers = splitPaymentCommand.getAmountForUsers();
-
-        if (accountIBANs == null || amountForUsers == null || accountIBANs.size() != amountForUsers.size()) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("description", "Invalid splitPayment command data");
-            return error;
+        List<Double> amountForUsers = SplitPayment.getAmountForUsers();
+        if (amountForUsers == null || amountForUsers.size() != accountIBANs.size()) {
+            return Map.of("description", "Mismatch between accounts and amounts");
         }
 
-        // Caută contul utilizatorului care a acceptat plata în lista IBAN-urilor
+        Map<String, Boolean> accountsAcceptingPayment = SplitPayment.getAccountsAcceptingPayment();
+
+        for (String accountIBAN : accountIBANs) {
+            Account account = acceptingUser.getAccountByIBAN(accountIBAN);
+            if (account != null) {
+                accountsAcceptingPayment.put(account.getIban(), true);
+                break;
+            }
+        }
+
+        boolean allAccepted = accountsAcceptingPayment.values().stream().allMatch(Boolean::booleanValue);
+        if (!allAccepted) {
+            return Map.of("description", "Not all accounts have accepted the split payment");
+        }
+
+        String currency = SplitPayment.getSplitPaymentCurrency();
+        int splitTimestamp = SplitPayment.getSplitPaymentTimestamp();
+
         for (int i = 0; i < accountIBANs.size(); i++) {
             String accountIBAN = accountIBANs.get(i);
             double amountForUser = amountForUsers.get(i);
 
-            // Verifică dacă IBAN-ul aparține utilizatorului care a acceptat
-            Account account = acceptingUser.getAccountByIBAN(accountIBAN);
-            if (account != null) {
-                // Deblochează suma din cont
-                account.unblockFunds(amountForUser);
+            for (User user : users) {
+                Account targetAccount = user.getAccountByIBAN(accountIBAN);
+                if (targetAccount != null) {
+                    targetAccount.withdrawFunds(amountForUser);
+                    double totalAmount = amountForUsers.stream().mapToDouble(Double::doubleValue).sum();
 
-                // Creează tranzacția pentru această deducere
-                Transaction transaction = new Transaction(
-                        timestamp,
-                        "Split payment deduction",
-                        null, // Fără sender specific
-                        accountIBAN,
-                        amountForUser,
-                        splitPaymentCommand.getCurrency(),
-                        null, null, null, null,
-                        null, // Fără destinatari specificați
-                        null, null,
-                        true,
-                        "splitPayment"
-                );
+                    BigDecimal roundedAmount = new BigDecimal(totalAmount).setScale(2, RoundingMode.HALF_UP);
+                    double finalAmount = roundedAmount.doubleValue();
+                    String finalAmountFormatted = String.format("%.2f", finalAmount);
 
-                account.addTransaction(transaction);
+                    Transaction deductionTransaction = new Transaction(
+                            splitTimestamp, // Folosim timestamp-ul splitPayment
+                            "Split payment of " + finalAmountFormatted + " " + currency,
+                            null, // Nu specificăm un destinatar
+                            accountIBAN, // Contul IBAN implicat
+                            finalAmount, // Suma totală dedusă (negativă pentru deducere)
+                            currency, // Moneda
+                            null,
+                            null,
+                            null,
+                            null,
+                            accountIBANs, // Lista conturilor implicate
+                            null,
+                            null,
+                            true,
+                            amountForUsers,
+                            "custom",
+                            "splitPayment"
+                    );
 
-                // Returnează succesul
-                Map<String, Object> success = new HashMap<>();
-                success.put("description", "Split payment processed for IBAN " + accountIBAN);
-                success.put("timestamp", timestamp);
-                success.put("remainingBalance", account.getBalance());
-                return success;
+                    targetAccount.addTransaction(deductionTransaction);
+                    user.addTransaction(deductionTransaction);
+                }
             }
         }
 
-        // Dacă IBAN-ul nu a fost găsit în conturile utilizatorului
-        Map<String, Object> error = new HashMap<>();
-        error.put("description", "No matching IBAN found for user " + email);
-        return error;
+        return Map.of("description", "Split payment completed successfully");
     }
 }

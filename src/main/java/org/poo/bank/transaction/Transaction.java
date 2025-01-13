@@ -24,7 +24,9 @@ public final class Transaction {
     private final List<String> involvedAccounts;
     private final String error;
     private final String newPlanType;
-    private final boolean success;// Adăugăm câmpul newPlanType
+    private final boolean success;
+    private final String splitPaymentType;
+    private final List<Double> amountForUsers;
 
     /**
      * Constructor pentru crearea unei tranzactii.
@@ -49,7 +51,8 @@ public final class Transaction {
                        final String transferType, final String card, final String cardHolder,
                        final String commerciant, final List<String> involvedAccounts,
                        final String error, final String newPlanType,
-                       final boolean success, final String transactionType) {
+                       final boolean success, final List<Double> amountForUsers,
+                       final String splitPaymentType,final String transactionType) {
         this.timestamp = timestamp;
         this.description = description;
         this.senderIBAN = senderIBAN;
@@ -65,6 +68,20 @@ public final class Transaction {
         this.error = error;
         this.success = success;
         this.newPlanType = newPlanType;
+        this.splitPaymentType = splitPaymentType;
+        this.amountForUsers = amountForUsers;
+    }
+
+    public List<Double> getAmountForUsers() {
+        return amountForUsers;
+    }
+
+    public String getSplitPaymentType() {
+        return splitPaymentType;
+    }
+
+    public boolean isSuccess() {
+        return success;
     }
 
     public boolean isSuccessful() {
@@ -176,7 +193,8 @@ public final class Transaction {
                 map.put("description", description);
                 map.put("currency", currency);
                 map.put("involvedAccounts", involvedAccounts);
-                map.put("amount", amount);
+                map.put("splitPaymentType", splitPaymentType);
+                map.put("amountForUsers", amountForUsers);
                 break;
             case "splitPaymentError":
                 map.put("timestamp", timestamp);
@@ -231,15 +249,7 @@ public final class Transaction {
                 map.put("amount", amount);
                 map.put("currency", currency);
                 break;
-            case "acceptSplitPayment":
-                map.put("timestamp", timestamp);
-                map.put("description", description);
-                map.put("senderIBAN", senderIBAN);
-                map.put("receiverIBAN", receiverIBAN);
-                map.put("amount", amount + " " + currency);
-                map.put("transferType", transferType);
-                break;
-                
+
             default:
                 break;
         }

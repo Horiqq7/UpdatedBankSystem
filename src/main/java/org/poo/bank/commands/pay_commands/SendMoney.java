@@ -193,7 +193,6 @@ public final class SendMoney {
 //            return output;
 //        }
 
-        System.out.println(amount + " " + command.getTimestamp());
         if (senderAccount.getBalance() < amount + comisionInAccountCurrency) {
             Transaction insufficientFundsTransaction = new Transaction(
                     timestamp,
@@ -210,6 +209,8 @@ public final class SendMoney {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "sendMoneyInsufficientFunds"
             );
             senderUser.addTransaction(insufficientFundsTransaction);
@@ -240,6 +241,8 @@ public final class SendMoney {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "sendMoney"
         );
 
@@ -258,6 +261,8 @@ public final class SendMoney {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "sendMoney"
         );
 

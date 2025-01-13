@@ -343,6 +343,8 @@ public final class Account {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "withdrawFunds"
             );
             addTransaction(transaction);
@@ -374,6 +376,8 @@ public final class Account {
                     null,
                     null,
                     true,
+                    null,
+                    null,
                     "addFunds"
             );
             addTransaction(transaction);
@@ -402,6 +406,8 @@ public final class Account {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "addCard"
         );
         addTransaction(transaction);
@@ -429,6 +435,8 @@ public final class Account {
                 null,
                 null,
                 true,
+                null,
+                null,
                 "removeCard"
         );
         addTransaction(transaction);

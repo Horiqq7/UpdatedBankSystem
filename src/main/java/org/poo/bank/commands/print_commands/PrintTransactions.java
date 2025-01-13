@@ -6,6 +6,8 @@ import org.poo.bank.user.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.Comparator;
 
 public final class PrintTransactions {
     private final List<User> users;
@@ -28,6 +30,10 @@ public final class PrintTransactions {
 
         List<Transaction> transactions = user.getTransactions();
         List<Map<String, Object>> outputTransactions = new ArrayList<>();
+
+        // Sortăm tranzacțiile după timestamp în ordine crescătoare
+        transactions.sort(Comparator.comparingInt(Transaction::getTimestamp));
+
         for (Transaction transaction : transactions) {
             outputTransactions.add(transaction.toMap());
         }
