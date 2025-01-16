@@ -51,7 +51,7 @@ public class Cashback {
         int transactionCount = account.getTransactionsCountForCommerciant(commerciant, true);  // True indică să numărăm doar tranzacțiile efectuate cu succes
 
         double cashbackPercentage = 0.0;
-        System.out.println("nrOfTran " + transactionCount + " " + commerciant);
+//        System.out.println("nrOfTran " + transactionCount + " " + commerciant);
 
         // Stabilim procentajul de cashback pe baza numărului de tranzacții
         if (category.equals("Food") && transactionCount == 2) {
@@ -106,7 +106,7 @@ public class Cashback {
 
         double cashbackInRON = cashbackPercentage * transactionAmountInRON;
         double cashbackInAccountCurrency = exchangeRateManager.convertCurrency("RON", accountCurrency, cashbackInRON);
-        System.out.println("debug cashback threshold " + cashbackInAccountCurrency + " " + commerciant);
+//        System.out.println("debug cashback threshold " + cashbackInAccountCurrency + " " + commerciant);
 
         return cashbackInAccountCurrency;
     }

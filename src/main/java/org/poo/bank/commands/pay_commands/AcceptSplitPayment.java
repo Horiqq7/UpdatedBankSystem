@@ -1,17 +1,22 @@
 package org.poo.bank.commands.pay_commands;
 
 import org.poo.bank.account.Account;
+import org.poo.bank.exchange_rates.ExchangeRateManager;
 import org.poo.bank.transaction.Transaction;
 import org.poo.fileio.CommandInput;
 import org.poo.bank.user.User;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class AcceptSplitPayment {
     private final List<User> users;
+    private final List<String> insufficientFundsAccounts = new ArrayList<>(); // Lista conturilor cu fonduri insuficiente
+    private final List<String> allInsufficientFundsAccounts = new ArrayList<>(); // Lista completă a conturilor fără fonduri suficiente
 
     public AcceptSplitPayment(final List<User> users) {
         this.users = users;
@@ -44,11 +49,28 @@ public final class AcceptSplitPayment {
 
         Map<String, Boolean> accountsAcceptingPayment = SplitPayment.getAccountsAcceptingPayment();
 
-        for (String accountIBAN : accountIBANs) {
+        for (int i = 0; i < accountIBANs.size(); i++) {
+            String accountIBAN = accountIBANs.get(i);
+            double amountForUser = amountForUsers.get(i);
+
             Account account = acceptingUser.getAccountByIBAN(accountIBAN);
+
             if (account != null) {
-                accountsAcceptingPayment.put(account.getIban(), true);
-                break;
+                double amountInAccountCurrency = amountForUser;
+                if (!account.getCurrency().equals(SplitPayment.getSplitPaymentCurrency())) {
+                    amountInAccountCurrency = ExchangeRateManager.getInstance()
+                            .convertCurrency(SplitPayment.getSplitPaymentCurrency(), account.getCurrency(), amountForUser);
+                }
+                System.out.println(amountInAccountCurrency + " " + accountIBAN + " " + SplitPayment.getSplitPaymentTimestamp());
+                if (account.getBalance() < amountForUser) {
+//                    System.out.println(account.getIban() + " " + SplitPayment.getSplitPaymentTimestamp());
+                    insufficientFundsAccounts.add(accountIBAN); // Adăugăm contul în lista celor fără fonduri suficiente
+                    if (!allInsufficientFundsAccounts.contains(accountIBAN)) {
+                        allInsufficientFundsAccounts.add(accountIBAN); // Adăugăm contul în lista completă
+                    }
+                } else {
+                    accountsAcceptingPayment.put(accountIBAN, true);
+                }
             }
         }
 
@@ -57,12 +79,23 @@ public final class AcceptSplitPayment {
             return Map.of("description", "Not all accounts have accepted the split payment");
         }
 
+        // Dacă există conturi fără fonduri suficiente, returnăm doar ultimul cont problematic
+        if (!insufficientFundsAccounts.isEmpty()) {
+            String lastProblematicAccount = insufficientFundsAccounts.get(insufficientFundsAccounts.size() - 1);
+            return Map.of(
+                    "description", "One or more accounts have insufficient funds",
+                    "lastProblematicAccount", lastProblematicAccount,
+                    "timestamp", SplitPayment.getSplitPaymentTimestamp()
+            );
+        }
+
         String currency = SplitPayment.getSplitPaymentCurrency();
         int splitTimestamp = SplitPayment.getSplitPaymentTimestamp();
 
         for (int i = 0; i < accountIBANs.size(); i++) {
             String accountIBAN = accountIBANs.get(i);
             double amountForUser = amountForUsers.get(i);
+
 
             for (User user : users) {
                 Account targetAccount = user.getAccountByIBAN(accountIBAN);
@@ -75,17 +108,17 @@ public final class AcceptSplitPayment {
                     String finalAmountFormatted = String.format("%.2f", finalAmount);
 
                     Transaction deductionTransaction = new Transaction(
-                            splitTimestamp, // Folosim timestamp-ul splitPayment
+                            splitTimestamp,
                             "Split payment of " + finalAmountFormatted + " " + currency,
-                            null, // Nu specificăm un destinatar
-                            accountIBAN, // Contul IBAN implicat
-                            finalAmount, // Suma totală dedusă (negativă pentru deducere)
-                            currency, // Moneda
+                            null,
+                            accountIBAN,
+                            finalAmount,
+                            currency,
                             null,
                             null,
                             null,
                             null,
-                            accountIBANs, // Lista conturilor implicate
+                            accountIBANs,
                             null,
                             null,
                             true,
@@ -100,6 +133,9 @@ public final class AcceptSplitPayment {
             }
         }
 
-        return Map.of("description", "Split payment completed successfully");
+        return Map.of(
+                "description", "Split payment completed successfully",
+                "allInsufficientFundsAccounts", allInsufficientFundsAccounts
+        );
     }
 }

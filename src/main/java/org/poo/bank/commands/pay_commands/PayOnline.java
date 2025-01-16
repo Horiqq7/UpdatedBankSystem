@@ -20,7 +20,6 @@ import java.util.Collections;
 public final class PayOnline {
     private List<User> users;
     private List<CommerciantInput> commerciants;
-    private Map<String, Map<String, Integer>> transactionsPerCommerciant = new HashMap<>();
 
     public PayOnline(final List<User> users, final List<CommerciantInput> commerciants) {
         this.users = users;
@@ -100,7 +99,7 @@ public final class PayOnline {
                 case "silver":
                     // Convertim suma în RON dacă este necesar
                     double amountInRON = amount;
-                    System.out.println(amount);
+//                    System.out.println(amount);
                     if (!currency.equalsIgnoreCase("RON")) {
                         try {
                             amountInRON = ExchangeRateManager.getInstance()
@@ -115,7 +114,7 @@ public final class PayOnline {
                             return output;
                         }
                     }
-                    System.out.println(amountInRON);
+//                    System.out.println(amountInRON);
 
                     if (amountInRON > 500) {
                         comisionInAccountCurrency = 0.1 / 100 * amount;
@@ -127,8 +126,8 @@ public final class PayOnline {
 
                 case "standard":
                     comisionInAccountCurrency = 0.2 / 100 * amount;
-                    System.out.println("comisionul in account currency " + comisionInAccountCurrency);
-                    System.out.println(amount);
+//                    System.out.println("comisionul in account currency " + comisionInAccountCurrency);
+//                    System.out.println(amount);
                     break;
             }
 

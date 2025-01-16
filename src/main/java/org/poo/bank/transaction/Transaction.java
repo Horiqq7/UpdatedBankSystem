@@ -201,7 +201,8 @@ public final class Transaction {
                 map.put("description", description);
                 map.put("currency", currency);
                 map.put("involvedAccounts", involvedAccounts);
-                map.put("amount", amount);
+                map.put("splitPaymentType", splitPaymentType);
+                map.put("amountForUsers", amountForUsers);
                 map.put("error", error);
                 break;
             case "destroyOneTimeCard", "newOneTimeCard":
