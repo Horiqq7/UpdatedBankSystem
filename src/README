@@ -1,0 +1,13 @@
+Rusu Horia
+321 CD
+
+	Pentru a doua parte a acestui proiect am ales sa pastrez structura de la prima parte. Am adaugat implementari pentru cashback, precum si pentru comenzi precum WithdrawSavings, UpgradePlan, CashWithdrawal.
+	Design Patternuri folosite sunt:
+	1. Strategy Pattern:
+		Am folosit Strategy Pattern in cadrul implementarii cashbackului, pentru a imi fi mai usor sa modific comportamentele de calcul ale cashbackului, in functie de conditii (spendingsThreshold sau nrOfTransactions).
+	2. Builder Pattern:
+		Am aplicat Builder Pattern in clasa Account, pentru a face procesul de creare a obiectelor de tip Account mai flexibil, mai clar si mai usor de intretinut.
+	3. Command Pattern:
+		Am aplicat Command Pattern in Bank, pentru a gestiona diversele comenzi bancare si a permite o arhitectura modulara si extensibila.
+	4. Template Method:
+		Am folosit Template Method in clasa AbstractReportCommand, pentru a reduce duplicarea codului. Algoritmul general de procesare a unui report e definit intr o singura locatie(in metoda process), iar pasii specifi sunt implementati in subclase.
