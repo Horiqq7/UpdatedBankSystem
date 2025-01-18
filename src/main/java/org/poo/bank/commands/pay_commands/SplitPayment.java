@@ -1,39 +1,43 @@
 package org.poo.bank.commands.pay_commands;
 
 import org.poo.bank.account.Account;
-import org.poo.bank.exchange_rates.ExchangeRateManager;
 import org.poo.fileio.CommandInput;
 import org.poo.bank.user.User;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 public final class SplitPayment {
     private final List<User> users;
-    private static final List<String> splitPaymentAccounts = new ArrayList<>();
+    private static final List<String> SPLIT_PAYMENT_ACCOUNTS = new ArrayList<>();
     private static List<Double> amountForUsers;
-    private static final Map<String, Boolean> accountsAcceptingPayment = new HashMap<>();
-    private static String splitPaymentCurrency; // Moneda pentru split payment
-    private static int splitPaymentTimestamp; // Timestamp pentru split payment
+    private static final Map<String, Boolean> ACCOUNTS_ACCEPTING_PAYMENT = new HashMap<>();
+    private static String splitPaymentCurrency;
+    private static int splitPaymentTimestamp;
 
     public SplitPayment(final List<User> users) {
         this.users = users;
     }
 
+    /**
+     * Proceseaza o plata impartita la mai multe conturi.
+     *
+     * @param command Obiectul de intrare care contine detaliile comenzii.
+     * @return O lista cu rezultate.
+     */
     public List<Map<String, Object>> splitPayment(final CommandInput command) {
-        // Resetăm starea split payment pentru a preveni conflictele
         resetSplitPaymentState();
 
         List<Map<String, Object>> output = new ArrayList<>();
         List<String> accountIBANs = command.getAccounts();
         double totalAmount = command.getAmount();
-        splitPaymentCurrency = command.getCurrency(); // Salvăm moneda
-        splitPaymentTimestamp = command.getTimestamp(); // Salvăm timestamp-ul
-        amountForUsers = command.getAmountForUsers(); // Salvăm sumele pentru utilizatori
+        splitPaymentCurrency = command.getCurrency();
+        splitPaymentTimestamp = command.getTimestamp();
+        amountForUsers = command.getAmountForUsers();
 
-        System.out.println("Processing splitPayment command...");
-        System.out.println("Initial state of splitPaymentAccounts: " + splitPaymentAccounts);
-        System.out.println("Initial state of amountForUsers: " + amountForUsers);
-        System.out.println("Initial state of accountsAcceptingPayment: " + accountsAcceptingPayment);
 
         if (totalAmount <= 0) {
             Map<String, Object> error = new HashMap<>();
@@ -68,12 +72,13 @@ public final class SplitPayment {
                 return output;
             }
 
-            splitPaymentAccounts.add(accountIBAN);
-            accountsAcceptingPayment.put(accountIBAN, false); // Inițial, contul nu a acceptat plata
+            SPLIT_PAYMENT_ACCOUNTS.add(accountIBAN);
+            ACCOUNTS_ACCEPTING_PAYMENT.put(accountIBAN, false);
         }
 
         Map<String, Object> success = new HashMap<>();
-        success.put("description", "Split payment of " + String.format("%.2f", totalAmount) + " " + splitPaymentCurrency);
+        success.put("description", "Split payment of " + String.format("%.2f", totalAmount)
+                + " " + splitPaymentCurrency);
         success.put("accounts", accountIBANs);
         success.put("timestamp", splitPaymentTimestamp);
         output.add(success);
@@ -83,7 +88,7 @@ public final class SplitPayment {
 
 
     public static List<String> getSplitPaymentAccounts() {
-        return splitPaymentAccounts;
+        return SPLIT_PAYMENT_ACCOUNTS;
     }
 
     public static List<Double> getAmountForUsers() {
@@ -91,7 +96,7 @@ public final class SplitPayment {
     }
 
     public static Map<String, Boolean> getAccountsAcceptingPayment() {
-        return accountsAcceptingPayment;
+        return ACCOUNTS_ACCEPTING_PAYMENT;
     }
 
     public static String getSplitPaymentCurrency() {
@@ -102,10 +107,13 @@ public final class SplitPayment {
         return splitPaymentTimestamp;
     }
 
+    /**
+     * Reseteaza starea asociata acestui tip de plata.
+     */
     public static void resetSplitPaymentState() {
-        splitPaymentAccounts.clear();
+        SPLIT_PAYMENT_ACCOUNTS.clear();
         amountForUsers = null;
-        accountsAcceptingPayment.clear();
+        ACCOUNTS_ACCEPTING_PAYMENT.clear();
         splitPaymentCurrency = null;
         splitPaymentTimestamp = 0;
     }

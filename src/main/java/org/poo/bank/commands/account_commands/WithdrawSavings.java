@@ -11,11 +11,23 @@ import java.util.Map;
 
 public final class WithdrawSavings {
     private final List<User> users;
+    private static final int MINIMUM_AGE = 21;
 
+    /**
+     * Constructor pentru clasa WithdrawSavings.
+     *
+     * @param users Lista de utilizatori care dețin conturi.
+     */
     public WithdrawSavings(final List<User> users) {
         this.users = users;
     }
 
+    /**
+     * Proceseaza o cerere de retragere dintr-un cont de economii.
+     *
+     * @param command Obiectul de intrare care contine detaliile comenzii.
+     * @return O lista cu o singura intrare Map, care reprezintă rezultatul tranzactiei.
+     */
     public List<Map<String, Object>> withdrawSavings(final CommandInput command) {
         String savingsIBAN = command.getAccount();
         double amount = command.getAmount();
@@ -35,32 +47,30 @@ public final class WithdrawSavings {
 
         String description;
         String transactionType;
-        String error = null;
 
         if (savingsAccount == null) {
             description = "Account not found";
             transactionType = "withdrawSavingsError";
-            error = "No savings account with IBAN: " + savingsIBAN;
         } else if (!"savings".equals(savingsAccount.getType())) {
             description = "Account is not of type savings.";
             transactionType = "withdrawSavingsError";
-            error = "Account type mismatch.";
-        } else if (accountHolder.getAge() < 21) {
+        } else if (accountHolder.getAge() < MINIMUM_AGE) {
             description = "You don't have the minimum age required.";
             transactionType = "withdrawSavingsError";
-            error = "Age restriction: Minimum 21 years.";
         } else if (savingsAccount.getBalance() < amount) {
             description = "Insufficient funds";
             transactionType = "withdrawSavingsError";
-            error = "Savings account balance is insufficient.";
         } else {
             Account classicAccount = accountHolder.getFirstClassicAccountByCurrency(currency);
             if (classicAccount == null) {
                 description = "You do not have a classic account.";
                 transactionType = "withdrawSavingsError";
-                error = "No classic account found for currency: " + currency;
             } else {
-                double equivalentAmount = ExchangeRate.convert(savingsAccount.getCurrency(), currency, amount);
+                double equivalentAmount = ExchangeRate.convert(
+                        savingsAccount.getCurrency(),
+                        currency,
+                        amount
+                );
                 double fee = savingsAccount.calculateFee(equivalentAmount);
 
                 if (savingsAccount.getBalance() >= amount + fee) {
@@ -70,7 +80,6 @@ public final class WithdrawSavings {
                     description = "Savings withdrawal";
                     transactionType = "withdrawSavings";
 
-                    // Creăm și adăugăm tranzacția de succes la istoricul utilizatorului.
                     Transaction successTransaction = new Transaction(
                             timestamp,
                             description,
@@ -90,12 +99,11 @@ public final class WithdrawSavings {
                             null,
                             transactionType
                     );
-                    accountHolder.addTransaction(successTransaction); // Adăugăm în istoricul utilizatorului
+                    accountHolder.addTransaction(successTransaction);
                     return List.of(successTransaction.toMap());
                 } else {
                     description = "Insufficient funds";
                     transactionType = "withdrawSavingsError";
-                    error = "Savings account balance is insufficient after applying fees.";
                 }
             }
         }
@@ -121,10 +129,9 @@ public final class WithdrawSavings {
         );
 
         if (accountHolder != null) {
-            accountHolder.addTransaction(errorTransaction); // Adăugăm în istoricul utilizatorului
+            accountHolder.addTransaction(errorTransaction);
         }
 
         return List.of(errorTransaction.toMap());
     }
-
 }

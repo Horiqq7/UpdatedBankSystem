@@ -9,18 +9,27 @@ import org.poo.bank.user.User;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class AcceptSplitPayment {
     private final List<User> users;
-    private final List<String> insufficientFundsAccounts = new ArrayList<>(); // Lista conturilor cu fonduri insuficiente
-    private final List<String> allInsufficientFundsAccounts = new ArrayList<>(); // Lista completă a conturilor fără fonduri suficiente
+    private final List<String> insufficientFundsAccounts = new ArrayList<>();
+    private final List<String> allInsufficientFundsAccounts = new ArrayList<>();
 
     public AcceptSplitPayment(final List<User> users) {
         this.users = users;
     }
+
+    /**
+     * Proceseaza plata in mai multe transe pentru utilizatorii implicati.
+     * Verifica daca utilizatorul care accepta plata exista si daca toate conturile implicate
+     * au fonduri suficiente. Daca toate conturile sunt acceptate, se efectueaza tranzactia.
+     *
+     * @param command Comanda ce contine informatii despre utilizator si plata
+     * @return un Map cu descrierea statusului procesului de plata,
+     * incluzand eventualele conturi cu fonduri insuficiente
+     */
 
     public Map<String, Object> acceptSplitPayment(final CommandInput command) {
         String email = command.getEmail();
@@ -56,17 +65,10 @@ public final class AcceptSplitPayment {
             Account account = acceptingUser.getAccountByIBAN(accountIBAN);
 
             if (account != null) {
-                double amountInAccountCurrency = amountForUser;
-                if (!account.getCurrency().equals(SplitPayment.getSplitPaymentCurrency())) {
-                    amountInAccountCurrency = ExchangeRateManager.getInstance()
-                            .convertCurrency(SplitPayment.getSplitPaymentCurrency(), account.getCurrency(), amountForUser);
-                }
-                System.out.println(amountInAccountCurrency + " " + accountIBAN + " " + SplitPayment.getSplitPaymentTimestamp());
                 if (account.getBalance() < amountForUser) {
-//                    System.out.println(account.getIban() + " " + SplitPayment.getSplitPaymentTimestamp());
-                    insufficientFundsAccounts.add(accountIBAN); // Adăugăm contul în lista celor fără fonduri suficiente
+                    insufficientFundsAccounts.add(accountIBAN);
                     if (!allInsufficientFundsAccounts.contains(accountIBAN)) {
-                        allInsufficientFundsAccounts.add(accountIBAN); // Adăugăm contul în lista completă
+                        allInsufficientFundsAccounts.add(accountIBAN);
                     }
                 } else {
                     accountsAcceptingPayment.put(accountIBAN, true);
@@ -74,14 +76,15 @@ public final class AcceptSplitPayment {
             }
         }
 
-        boolean allAccepted = accountsAcceptingPayment.values().stream().allMatch(Boolean::booleanValue);
+        boolean allAccepted = accountsAcceptingPayment.values().stream().
+                allMatch(Boolean::booleanValue);
         if (!allAccepted) {
             return Map.of("description", "Not all accounts have accepted the split payment");
         }
 
-        // Dacă există conturi fără fonduri suficiente, returnăm doar ultimul cont problematic
         if (!insufficientFundsAccounts.isEmpty()) {
-            String lastProblematicAccount = insufficientFundsAccounts.get(insufficientFundsAccounts.size() - 1);
+            String lastProblematicAccount = insufficientFundsAccounts.
+                    get(insufficientFundsAccounts.size() - 1);
             return Map.of(
                     "description", "One or more accounts have insufficient funds",
                     "lastProblematicAccount", lastProblematicAccount,
@@ -101,9 +104,11 @@ public final class AcceptSplitPayment {
                 Account targetAccount = user.getAccountByIBAN(accountIBAN);
                 if (targetAccount != null) {
                     targetAccount.withdrawFunds(amountForUser);
-                    double totalAmount = amountForUsers.stream().mapToDouble(Double::doubleValue).sum();
+                    double totalAmount = amountForUsers.stream().
+                            mapToDouble(Double::doubleValue).sum();
 
-                    BigDecimal roundedAmount = new BigDecimal(totalAmount).setScale(2, RoundingMode.HALF_UP);
+                    BigDecimal roundedAmount = new BigDecimal(totalAmount).
+                            setScale(2, RoundingMode.HALF_UP);
                     double finalAmount = roundedAmount.doubleValue();
                     String finalAmountFormatted = String.format("%.2f", finalAmount);
 

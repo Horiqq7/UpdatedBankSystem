@@ -39,7 +39,6 @@ public final class AddAccount {
                 .interestRate(command.getInterestRate())
                 .build();
 
-
         user.addAccount(account);
 
         Transaction transaction = new Transaction(

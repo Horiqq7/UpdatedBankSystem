@@ -8,8 +8,8 @@ import org.poo.fileio.CommandInput;
 import org.poo.bank.exchange_rates.ExchangeRateManager;
 import org.poo.bank.user.User;
 import org.poo.utils.Utils;
-import org.poo.bank.Cashback; // Adăugăm clasa Cashback
-import org.poo.fileio.CommerciantInput; // Pentru comerciant
+import org.poo.bank.cashback.Cashback;
+import org.poo.fileio.CommerciantInput;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +18,12 @@ import java.util.Map;
 import java.util.Collections;
 
 public final class PayOnline {
+
+    private static final double SILVER_THRESHOLD_RON = 500;
+    private static final double SILVER_COMMISSION_PERCENTAGE = 0.1;
+    private static final double STANDARD_COMMISSION_PERCENTAGE = 0.2;
+    private static final double PERCENTAGE = 100;
+
     private List<User> users;
     private List<CommerciantInput> commerciants;
 
@@ -26,6 +32,22 @@ public final class PayOnline {
         this.commerciants = commerciants;
     }
 
+    /**
+     * Proceseaza o plata online folosind comanda furnizata.
+     *
+     * Metoda verifica daca utilizatorul exista, gaseste cardul specificat,
+     * verifica fondurile suficiente, efectueaza conversia valutara daca este
+     * necesar si actualizeaza statusul cardului si al contului dupa caz.
+     *
+     * Se gestioneaza mai multe scenarii, inclusiv fonduri insuficiente,
+     * carduri frozen si distrugerea one time cardurilor.
+     *
+     * @param command Comanda care contine detaliile platii.
+     *
+     * @return O lista de harti de raspuns care contin statusul comenzii,
+     * incluzand erorile, daca este cazul.
+     *         O lista goala indica procesarea cu succes.
+     */
     public List<Map<String, Object>> payOnline(final CommandInput command) {
         List<Map<String, Object>> output = new ArrayList<>();
 
@@ -65,12 +87,10 @@ public final class PayOnline {
         String currency = command.getCurrency();
         double availableBalance = account.getBalance();
 
-        // Conversie valutara daca este necesar
         if (!currency.equalsIgnoreCase(account.getCurrency())) {
             try {
                 amount = ExchangeRateManager.getInstance()
-                        .convertCurrency(currency, account.getCurrency(),
-                                amount);
+                        .convertCurrency(currency, account.getCurrency(), amount);
             } catch (IllegalArgumentException e) {
                 Map<String, Object> errorNode = new HashMap<>();
                 errorNode.put("description", "Exchange rates not available");
@@ -82,24 +102,20 @@ public final class PayOnline {
             }
         }
 
-
-        double comisionInAccountCurrency = 0.0; // Comision în moneda contului
+        double comisionInAccountCurrency = 0.0;
 
         try {
-            String userPlan = user.getPlan(); // Obținem planul utilizatorului
+            String userPlan = user.getPlan();
             if (userPlan == null) {
-                userPlan = "standard"; // Dacă planul este null, presupunem planul standard
+                userPlan = "standard";
             }
 
-            // Calculăm comisionul în funcție de planul utilizatorului
             switch (userPlan.toLowerCase()) {
                 case "student":
                     break;
 
                 case "silver":
-                    // Convertim suma în RON dacă este necesar
                     double amountInRON = amount;
-//                    System.out.println(amount);
                     if (!currency.equalsIgnoreCase("RON")) {
                         try {
                             amountInRON = ExchangeRateManager.getInstance()
@@ -114,10 +130,10 @@ public final class PayOnline {
                             return output;
                         }
                     }
-//                    System.out.println(amountInRON);
 
-                    if (amountInRON > 500) {
-                        comisionInAccountCurrency = 0.1 / 100 * amount;
+                    if (amountInRON > SILVER_THRESHOLD_RON) {
+                        comisionInAccountCurrency = SILVER_COMMISSION_PERCENTAGE
+                                / PERCENTAGE * amount;
                     }
                     break;
 
@@ -125,9 +141,11 @@ public final class PayOnline {
                     break;
 
                 case "standard":
-                    comisionInAccountCurrency = 0.2 / 100 * amount;
-//                    System.out.println("comisionul in account currency " + comisionInAccountCurrency);
-//                    System.out.println(amount);
+                    comisionInAccountCurrency = STANDARD_COMMISSION_PERCENTAGE
+                            / PERCENTAGE * amount;
+                    break;
+
+                default:
                     break;
             }
 
@@ -141,7 +159,8 @@ public final class PayOnline {
             return output;
         }
 
-        if (availableBalance < amount + comisionInAccountCurrency && card.getStatus().equals("active")) {
+        if (availableBalance < amount + comisionInAccountCurrency
+                && card.getStatus().equals("active")) {
             Transaction transaction1 = new Transaction(
                     command.getTimestamp(),
                     "Insufficient funds",
@@ -165,10 +184,8 @@ public final class PayOnline {
         }
 
         if (comisionInAccountCurrency > 0.0) {
-            account.withdrawFunds(comisionInAccountCurrency); // Retragem comisionul din contul expeditorului
+            account.withdrawFunds(comisionInAccountCurrency);
         }
-
-
 
         account.withdrawFunds(amount);
         if (amount > 0) {
@@ -196,13 +213,11 @@ public final class PayOnline {
             account.addTransaction(transaction);
         }
 
-
         Cashback cashback = new Cashback();
         String userPlan = user.getPlan();
         CommerciantInput commerciantObj = findCommerciant(command.getCommerciant());
         double cashbackAmount = cashback.applyCashback(
                 user.getEmail(),
-                account.getIban(),
                 command.getCommerciant(),
                 command.getAmount(),
                 userPlan,
@@ -210,8 +225,7 @@ public final class PayOnline {
                 command.getCurrency(),
                 account.getCurrency(),
                 ExchangeRateManager.getInstance(),
-                account  // Adaugă obiectul `account` aici
-        );
+                account);
 
         account.addFunds(cashbackAmount);
 
@@ -267,7 +281,7 @@ public final class PayOnline {
         return Collections.emptyList();
     }
 
-    private CommerciantInput findCommerciant(String commerciantName) {
+    private CommerciantInput findCommerciant(final String commerciantName) {
         for (CommerciantInput commerciant : commerciants) {
             if (commerciant.getCommerciant().equalsIgnoreCase(commerciantName)) {
                 return commerciant;

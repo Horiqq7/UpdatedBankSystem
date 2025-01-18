@@ -16,17 +16,25 @@ public final class AddInterest {
         this.users = users;
     }
 
+    /**
+     * Adauga dobanda unui cont de economii specificat prin IBAN.
+     *
+     * @param command Obiectul de tip CommandInput care contine IBAN-ul contului si timestamp-ul comenzii.
+     * @return O lista cu un singur Map ce contine raspunsul comenzii in cazul in care contul nu este gasit
+     *         sau nu este un cont de economii. Lista este goala daca operatia are succes.
+     */
+
     public List<Map<String, Object>> addInterest(final CommandInput command) {
         String targetIBAN = command.getAccount();
         int currentTimestamp = command.getTimestamp();
 
         Account targetAccount = null;
-        User targetUser = null; // Variabilă pentru a reține utilizatorul găsit.
+        User targetUser = null;
 
         for (User user : users) {
             targetAccount = user.getAccountByIBAN(targetIBAN);
             if (targetAccount != null) {
-                targetUser = user; // Salvează utilizatorul găsit.
+                targetUser = user;
                 break;
             }
         }
@@ -85,7 +93,6 @@ public final class AddInterest {
                 null,
                 "addInterestRate");
 
-        // Folosește targetUser pentru a adăuga tranzacția.
         targetUser.addTransaction(transaction);
         targetAccount.addTransaction(transaction);
 

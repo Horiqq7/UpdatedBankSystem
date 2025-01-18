@@ -75,7 +75,7 @@ public class CommandHandler {
                 handleAddInterest(command, output);
                 break;
             case "withdrawSavings":
-                handleWithdrawSavings(command, objectNode, output);
+                handleWithdrawSavings(command);
                 break;
             case "upgradePlan":
                 try {
@@ -94,14 +94,11 @@ public class CommandHandler {
             case "acceptSplitPayment":
                 bank.processCommand(command);
                 break;
-
-
             default:
                 objectNode.put("type", "error");
                 objectNode.put("message", "Unknown command: " + command.getCommand());
                 output.add(objectNode);
         }
-
         return output;
     }
 
@@ -111,19 +108,13 @@ public class CommandHandler {
         objectNode.put("timestamp", command.getTimestamp());
 
         try {
-            // Procesăm retragerea
             bank.processCommand(command);
-
-            // Dacă nu există erori, nu trebuie să adăugăm nimic în output
         } catch (IllegalArgumentException e) {
-            // În caz de eroare, verificăm dacă mesajul este "Card not found"
             if (e.getMessage().equals("Card not found")) {
                 final var errorNode = objectMapper.createObjectNode();
                 errorNode.put("description", "Card not found");
                 errorNode.put("timestamp", command.getTimestamp());
                 objectNode.set("output", errorNode);
-
-                // Adăugăm rezultatul în output doar în caz de eroare
                 output.add(objectNode);
             } else {
                 final var errorNode = objectMapper.createObjectNode();
@@ -135,13 +126,9 @@ public class CommandHandler {
         }
     }
 
-
-
-    private void handleWithdrawSavings(final CommandInput command, final ObjectNode objectNode, final ArrayNode output) {
+    private void handleWithdrawSavings(final CommandInput command) {
         bank.processCommand(command);
-        // Nu adăugăm nimic în `output` pentru această comandă, tranzacția va fi gestionată separat
     }
-
 
     private void handlePrintUsers(final CommandInput command, final ObjectNode objectNode,
                                   final ArrayNode output) {
@@ -191,23 +178,17 @@ public class CommandHandler {
     private void handleSendMoney(final CommandInput command, final ObjectNode objectNode,
                                  final ArrayNode output) {
         try {
-            // Procesăm comanda sendMoney
             List<Map<String, Object>> response = bank.processCommand(command);
 
-            // Verificăm dacă există un răspuns cu eroare "User not found" pentru destinatar
-            if (!response.isEmpty() && response.get(0).containsKey("description") &&
-                    response.get(0).get("description").equals("User not found")) {
-                // Dacă destinatarul nu a fost găsit, adăugăm mesajul de eroare în output
+            if (!response.isEmpty() && response.get(0).containsKey("description")
+                    && response.get(0).get("description").equals("User not found")) {
                 final var errorNode = objectMapper.createObjectNode();
                 errorNode.put("description", "User not found");
                 errorNode.put("timestamp", command.getTimestamp());
                 objectNode.set("output", errorNode);
                 output.add(objectNode);
             }
-            // Nu adăugăm nimic în output dacă tranzacția a fost efectuată cu succes (fără erori)
-
         } catch (IllegalArgumentException e) {
-            // În cazul unei erori generale, adăugăm eroarea în output
             final var errorNode = objectMapper.createObjectNode();
             errorNode.put("description", e.getMessage());
             errorNode.put("timestamp", command.getTimestamp());
@@ -215,8 +196,6 @@ public class CommandHandler {
             output.add(objectNode);
         }
     }
-
-
 
     private void handlePrintTransactions(final CommandInput command, final ObjectNode objectNode,
                                          final ArrayNode output) {

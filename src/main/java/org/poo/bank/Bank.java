@@ -34,11 +34,10 @@ import java.util.*;
 @Getter
 public class Bank {
     private final List<User> users = new ArrayList<>();
-    private final List<CommerciantInput> commerciants = new ArrayList<>(); // Lista comercianților
+    private final List<CommerciantInput> commerciants = new ArrayList<>();
     @Setter
     private Map<String, Account> accounts = new HashMap<>();
 
-    // Lista pentru stocarea comenzilor procesate
     private final List<CommandInput> processedCommands = new ArrayList<>();
 
     /**
@@ -98,7 +97,7 @@ public class Bank {
                 setMinimumBalance.setMinimumBalance(command);
                 return Collections.emptyList();
             case "payOnline":
-                PayOnline payOnlineProcessor = new PayOnline(users, commerciants); // Transmitem comercianții
+                PayOnline payOnlineProcessor = new PayOnline(users, commerciants);
                 List<Map<String, Object>> response = payOnlineProcessor.payOnline(command);
                 return response.isEmpty() ? Collections.emptyList() : response;
             case "sendMoney":
@@ -125,10 +124,11 @@ public class Bank {
                         : changeInterestRateResponse;
             case "splitPayment":
                 SplitPayment splitPaymentProcessor = new SplitPayment(users);
-                List<Map<String, Object>> splitPaymentResponse = splitPaymentProcessor.splitPayment(command);
-                // Salvăm comanda procesată în lista de comenzi
+                List<Map<String, Object>> splitPaymentResponse
+                        = splitPaymentProcessor.splitPayment(command);
                 processedCommands.add(command);
-                return splitPaymentResponse.isEmpty() ? Collections.emptyList() : splitPaymentResponse;
+                return splitPaymentResponse.isEmpty() ?
+                        Collections.emptyList() : splitPaymentResponse;
             case "spendingsReport":
                 AbstractReportCommand spendingsReport = new SpendingsReport();
                 return List.of(spendingsReport.process(command, getUsers()));
@@ -146,7 +146,6 @@ public class Bank {
                 upgradePlanProcessor.execute(command);
                 return Collections.emptyList();
             case "cashWithdrawal":
-                // Folosim CashWithdrawal pentru a executa retragerea de numerar
                 CashWithdrawal.executeCashWithdrawal(
                         command.getCardNumber(),
                         command.getAmount(),
@@ -158,7 +157,8 @@ public class Bank {
                 return Collections.emptyList();
             case "acceptSplitPayment":
                 AcceptSplitPayment acceptSplitPaymentProcessor = new AcceptSplitPayment(users);
-                Map<String, Object> acceptResult = acceptSplitPaymentProcessor.acceptSplitPayment(command);
+                Map<String, Object> acceptResult =
+                        acceptSplitPaymentProcessor.acceptSplitPayment(command);
                 if (acceptResult != null) {
                     return List.of(acceptResult);
                 } else {
@@ -171,10 +171,5 @@ public class Bank {
                 throw new IllegalArgumentException("Unknown command: "
                         + command.getCommand());
         }
-    }
-
-    // Metodă pentru a obține comenzile procesate până acum
-    public List<CommandInput> getProcessedCommands() {
-        return processedCommands;
     }
 }

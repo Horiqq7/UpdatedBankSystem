@@ -1,7 +1,5 @@
 package org.poo.bank.transaction;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +50,7 @@ public final class Transaction {
                        final String commerciant, final List<String> involvedAccounts,
                        final String error, final String newPlanType,
                        final boolean success, final List<Double> amountForUsers,
-                       final String splitPaymentType,final String transactionType) {
+                       final String splitPaymentType, final String transactionType) {
         this.timestamp = timestamp;
         this.description = description;
         this.senderIBAN = senderIBAN;
@@ -62,7 +60,7 @@ public final class Transaction {
         this.transferType = transferType;
         this.card = card;
         this.cardHolder = cardHolder;
-        this.commerciant = commerciant != null ? commerciant : "";  // Setăm o valoare implicită, dacă este null
+        this.commerciant = commerciant != null ? commerciant : "";
         this.involvedAccounts = involvedAccounts;
         this.transactionType = transactionType;
         this.error = error;
@@ -86,10 +84,6 @@ public final class Transaction {
 
     public boolean isSuccessful() {
         return success;
-    }
-
-    public List<String> getInvolvedAccounts() {
-        return involvedAccounts;
     }
 
     public String getCommerciant() {
@@ -140,13 +134,12 @@ public final class Transaction {
         return error;
     }
 
-    // Getter pentru newPlanType
     public String getNewPlanType() {
         return newPlanType;
     }
 
     /**
-     * Transforma tranzactia într-un map cu detalii.
+     * Transforma tranzactia intr-un map cu detalii.
      *
      * @return Un map care contine detalii despre fiecare tranzactie.
      */
@@ -233,7 +226,7 @@ public final class Transaction {
                 map.put("timestamp", timestamp);
                 map.put("description", description);
                 map.put("accountIBAN", senderIBAN);
-                map.put("newPlanType", newPlanType);  // Adăugăm câmpul newPlanType
+                map.put("newPlanType", newPlanType);
                 break;
             case "cashWithdrawalError":
                 map.put("timestamp", timestamp);

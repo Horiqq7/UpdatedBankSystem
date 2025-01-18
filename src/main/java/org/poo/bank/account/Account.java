@@ -35,53 +35,23 @@ public final class Account {
         this.blockedFunds = 0;
     }
 
-
-    public void blockFunds(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Amount to block must be greater than zero");
-        }
-        if (amount > balance) {
-            throw new IllegalArgumentException("Insufficient funds to block");
-        }
-        blockedFunds += amount;  // Actualizăm fondurile blocate
-    }
-
-
-    // Metoda pentru a debloca fonduri
-    public void unblockFunds(double amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Amount to unblock must be greater than zero");
-        }
-        if (blockedFunds < amount) {
-            throw new IllegalArgumentException("Cannot unblock more funds than currently blocked");
-        }
-        blockedFunds -= amount;  // Deblocăm suma
-    }
-
-    // Metoda pentru a obține fondurile blocate
-    public double getBlockedFunds() {
-        return blockedFunds;
-    }
-
     /**
-     * Returnează numărul de tranzacții efectuate cu un comerciant specificat.
+     * Returneaza numarul de tranzactii efectuate cu un comerciant specificat.
      *
      * @param commerciant Numele comerciantului.
-     * @return Numărul de tranzacții realizate cu comerciantul respectiv.
+     * @return Numarul de tranzactii realizate cu comerciantul respectiv.
      */
-    public int getTransactionsCountForCommerciant(String commerciant, boolean successfulOnly) {
+    public int getTransactionsCountForCommerciant(final String commerciant,
+                                                  final boolean successfulOnly) {
         int count = 0;
-
         for (Transaction transaction : transactions) {
-            if (transaction.getCommerciant().equalsIgnoreCase(commerciant) && (successfulOnly ? transaction.isSuccessful() : true)) {
+            if (transaction.getCommerciant().equalsIgnoreCase(commerciant)
+                    && (successfulOnly ? transaction.isSuccessful() : true)) {
                 count++;
             }
         }
-
         return count;
     }
-
-
 
     /**
      * Calculeaza comisionul pentru o suma specificata.
@@ -333,7 +303,7 @@ public final class Account {
                     "Funds withdrawn",
                     iban,
                     null,
-                    -amount,
+                    amount,
                     currency,
                     null,
                     null,

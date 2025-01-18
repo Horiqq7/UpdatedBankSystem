@@ -1,0 +1,59 @@
+commit 6823d033acba59b3711a2287cf310b1cd3691e3e
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Thu Jan 16 21:41:47 2025 +0200
+
+    Am rezolvat pana la testul 7 inclusiv
+
+commit 91ff26b9f92cef121c5d18ca1d9f80e574de6b51
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Mon Jan 13 18:11:03 2025 +0200
+
+    Am facut splitPayment custom
+
+commit 43704b2257ab388d576be2ae0a1d1f7f67d333e1
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sun Jan 12 23:06:12 2025 +0200
+
+    Aproape am facut splitPayment
+
+commit b7ac6a833403133fd06a47978792684774136978
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sun Jan 12 20:17:01 2025 +0200
+
+    Am rezolvat testul 6
+
+commit 3e233b784948a65e0e8b856118da37e260dea89f
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sun Jan 12 10:59:17 2025 +0200
+
+    Am facut testul 5
+
+commit 8f4c881b2a29d24d89813cd5b745bdce0fa92cd6
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sun Jan 12 01:15:42 2025 +0200
+
+    Am facut testul 4, am reparat probleme legate de comision
+
+commit d01039a814c2d515002da47ed1891165ccab5b43
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sat Jan 11 22:43:55 2025 +0200
+
+    Am facut testul al treilea
+
+commit 5c2fe107ee4eac40f7b8341183b331d8bb96723a
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sat Jan 11 19:37:53 2025 +0200
+
+    Am facut testul 2
+
+commit 7a263c8dcdbf86c5d616e4176991c46b95ae5d78
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sat Jan 11 18:27:44 2025 +0200
+
+    Aproape am reusit sa rezolv problema la comision la testul2
+
+commit e9f0ee3c77042bf0b2816806853d0aacab7724f0
+Author: Horia Rusu <horiarusu612@gmail.com>
+Date:   Sat Jan 11 14:01:20 2025 +0200
+
+    Am facut cashbackul si withdrawSavings

@@ -53,7 +53,6 @@ public final class ExchangeRateManager {
         exchangeGraph.putIfAbsent(from, new HashMap<>());
         exchangeGraph.get(from).put(to, rate);
 
-        // Adaugă rata inversă corectă
         exchangeGraph.putIfAbsent(to, new HashMap<>());
         if (rate > 0) {
             double inverseRate = 1.0 / rate;
@@ -113,7 +112,6 @@ public final class ExchangeRateManager {
             }
         }
 
-        // Dacă nu există o cale valabilă între monede
         return 0;
     }
 

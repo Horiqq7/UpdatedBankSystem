@@ -42,11 +42,21 @@ public final class ExchangeRate {
                 + '}';
     }
 
-    public static double convert(String from, String to, double amount) {
+    /**
+     * Converteste o suma de bani dintr-o moneda intr-o alta moneda,
+     * folosind rata de schimb actuala.
+     *
+     * @param from   Moneda sursa din care se face conversia.
+     * @param to     Moneda tinta in care se va converti suma.
+     * @param amount Suma de bani care se doreste a fi convertita.
+     * @return       Suma convertita in moneda tinta, conform ratei de schimb actuale.
+     * @throws IllegalArgumentException Daca nu exista o rata de schimb valabila
+     * intre monedele specificate.
+     */
+    public static double convert(final String from, final String to, final double amount) {
         ExchangeRateManager manager = ExchangeRateManager.getInstance();
         return manager.convertCurrency(from, to, amount);
     }
-
 
     public String getFrom() {
         return from;
